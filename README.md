@@ -634,6 +634,13 @@ Apply Supabase migrations by running `supabase/migrations/20260905_watchlist_com
 ```bash
 npm run dev
 ```
+```Login Credentials -
+Email - xyz@gmail.com
+Password - xyz12345
+
+or
+Email - abc@gmail.com
+Password - abc@gmail.com
 
 Open `http://localhost:3000`.
 
