@@ -1,0 +1,31 @@
+What to build? - CODE 2026
+Build a Smart Market Watchlist
+Build a smart market watchlist that helps users not just track stocks, but quickly understand what has “meaningfully changed” since they last checked, and what deserves their attention now.
+
+At minimum, users should be able to:
+● Create and manage a watchlist
+
+● View latest market information
+
+● Return later and see what has changed
+
+Build it end-to-end
+You are expected to build both the frontend and backend.
+
+You decide:
+
+● What counts as a meaningful change
+
+● What information to surface
+
+● How state persists across sessions/devices
+
+● How to handle stale, delayed or conflicting data
+
+● How the system scales for larger watchlists and more users
+
+● Where to keep things simple vs add complexity
+
+There is no prescribed UI, feature set or architecture.
+
+Don’t build the obvious watchlist. Build the version you believe should exist - and be ready to explain why.

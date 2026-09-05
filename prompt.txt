@@ -1,0 +1,1834 @@
+# BUILD A PRODUCTION-QUALITY FULL-STACK SMART MARKET WATCHLIST
+
+You are acting as a **senior product designer, UX engineer, frontend engineer, backend engineer, data engineer, and creative interaction designer**.
+
+Build the application described below **end-to-end**.
+
+This is for the **CODE 2026 hackathon**.
+
+The goal is NOT to create another generic stock dashboard.
+
+The goal is to create a market intelligence experience that answers one question extremely well:
+
+> **"What meaningfully changed since I last checked, and what deserves my attention now?"**
+
+---
+
+# 1. PRODUCT REQUIREMENT
+
+The application must allow users to:
+
+* Create and manage watchlists
+* Search for stocks
+* Add/remove stocks
+* View current/latest market information
+* View historical price information
+* Return later and see what changed since their previous visit
+* Understand why a particular stock deserves attention
+* Persist watchlists and previous state across sessions
+* Handle stale/delayed/unavailable market data
+* Scale architecturally to multiple users
+
+The application should feel like a **premium financial product**, not a CRUD application.
+
+---
+
+# 2. CORE PRODUCT CONCEPT
+
+Call the intelligence layer:
+
+# MARKET PULSE
+
+When the user returns, the application should immediately answer:
+
+> **What changed while you were away?**
+
+Example:
+
+---
+
+### Good evening.
+
+You were away for **7h 42m**
+
+**3 meaningful changes**
+
+**RELIANCE**
++3.82%
+Volume 2.4× normal
+
+**TCS**
+Crossed 30-day high
+
+**HDFCBANK**
+-2.71%
+Unusual volatility detected
+
+---
+
+The user should NOT need to inspect every stock individually.
+
+The system should prioritize what matters.
+
+---
+
+# 3. IMPORTANT PRODUCT PRINCIPLE
+
+Follow this rule everywhere:
+
+> **Complexity should exist underneath the interface, not inside it.**
+
+The backend can calculate dozens of metrics.
+
+The user should see:
+
+> "RELIANCE deserves attention because it moved 3.8% with unusually high volume."
+
+Not:
+
+> RSI 71 / MACD 0.43 / ATR 52 / Bollinger 2.1 / etc.
+
+The product should feel intelligent without claiming to predict the market.
+
+---
+
+# 4. TECH STACK
+
+Use this stack unless there is a compelling technical reason to change something.
+
+## FRONTEND
+
+### Framework
+
+**Next.js + React + TypeScript**
+
+Use the latest stable version available in the environment.
+
+Use:
+
+* App Router
+* Server Components where useful
+* Client Components only where interactivity is required
+
+### Styling
+
+**Tailwind CSS**
+
+Create a proper design system instead of styling each component independently.
+
+### Animation
+
+Use:
+
+**Motion / Framer Motion**
+
+for:
+
+* page transitions
+* number transitions
+* card animations
+* layout animations
+* scroll-linked animation
+* shared element transitions
+* microinteractions
+
+### 3D
+
+Use:
+
+**Three.js + React Three Fiber**
+
+ONLY where it genuinely improves the experience.
+
+The opening market visualization can use 3D depth.
+
+Do not make the entire UI a 3D scene.
+
+### Charts
+
+Prefer:
+
+**TradingView Lightweight Charts**
+
+or another high-performance financial charting library.
+
+Charts must support:
+
+* 1D
+* 1W
+* 1M
+* 3M
+* 1Y
+
+and ideally:
+
+* price
+* volume
+* crosshair
+* hover tooltip
+
+---
+
+# 5. BACKEND
+
+Use:
+
+**Next.js API routes / Route Handlers**
+
+unless a separate Node.js service is genuinely necessary.
+
+Create clean backend service layers.
+
+Architecture:
+
+```text
+Frontend
+   ↓
+API Layer
+   ↓
+Service Layer
+   ↓
+Business Logic
+   ↓
+Data Providers
+   ↓
+Database
+```
+
+Do NOT put business logic directly inside UI components.
+
+---
+
+# 6. DATABASE
+
+Use:
+
+**PostgreSQL**
+
+with:
+
+**Prisma ORM**
+
+Use **Supabase** as the hosted PostgreSQL/auth platform if available.
+
+Database should store:
+
+### User
+
+* id
+* email
+* name
+* createdAt
+* lastSeenAt
+
+### Watchlist
+
+* id
+* userId
+* name
+* createdAt
+* updatedAt
+
+### WatchlistItem
+
+* id
+* watchlistId
+* symbol
+* position
+* addedAt
+
+### Stock
+
+* symbol
+* companyName
+* exchange
+* sector
+
+### MarketSnapshot
+
+* id
+* symbol
+* timestamp
+* price
+* previousClose
+* open
+* high
+* low
+* volume
+
+### UserStockSnapshot
+
+Store the user's previous observed state.
+
+* userId
+* symbol
+* timestamp
+* price
+* volume
+* attentionScore
+
+### MarketEvent
+
+* id
+* symbol
+* timestamp
+* type
+* severity
+* metadata
+
+### UserEventState
+
+* userId
+* eventId
+* acknowledged
+* dismissed
+* saved
+
+---
+
+# 7. MARKET DATA API
+
+Use:
+
+# Twelve Data
+
+Create an abstraction:
+
+```typescript
+interface MarketDataProvider {
+  getQuote(symbol: string): Promise<Quote>;
+  getHistoricalData(
+    symbol: string,
+    range: string
+  ): Promise<HistoricalData>;
+  searchSymbols(query: string): Promise<Stock[]>;
+}
+```
+
+Implement:
+
+```text
+TwelveDataProvider
+MockMarketDataProvider
+```
+
+The application must be able to switch between them.
+
+---
+
+# 8. VERY IMPORTANT API SECURITY
+
+Never expose market-data API keys in the browser.
+
+Never do:
+
+```text
+React → Twelve Data
+```
+
+Instead:
+
+```text
+React
+  ↓
+Your Backend
+  ↓
+Twelve Data
+```
+
+Store secrets only in environment variables.
+
+Example:
+
+```env
+TWELVE_DATA_API_KEY=
+GEMINI_API_KEY=
+DATABASE_URL=
+DIRECT_URL=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+Never expose:
+
+```text
+SUPABASE_SERVICE_ROLE_KEY
+TWELVE_DATA_API_KEY
+GEMINI_API_KEY
+DATABASE_URL
+```
+
+to client-side code.
+
+---
+
+# 9. GEMINI AI
+
+Use the **Gemini API** for natural-language explanations.
+
+Do NOT use Gemini to calculate financial facts.
+
+The deterministic backend calculates:
+
+```text
+price change
+volume anomaly
+volatility change
+breakout
+recent high/low
+relative performance
+attention score
+```
+
+Then Gemini receives verified facts.
+
+Example input:
+
+```json
+{
+  "symbol": "RELIANCE",
+  "priceChange": 3.82,
+  "volumeMultiple": 2.4,
+  "crossed30DayHigh": true,
+  "timeSinceLastSeen": "7h 42m"
+}
+```
+
+Gemini generates a concise explanation:
+
+> "RELIANCE deserves attention because it gained 3.8% while trading at roughly 2.4× its normal volume and crossed its recent high."
+
+Never allow the AI to invent:
+
+* prices
+* percentages
+* events
+* news
+* financial claims
+
+The AI is an **explanation layer**, not the source of truth.
+
+---
+
+# 10. MEANINGFUL CHANGE ENGINE
+
+Create a dedicated service:
+
+```text
+MeaningfulChangeEngine
+```
+
+For every stock calculate:
+
+```text
+priceChange
+volumeChange
+volatilityChange
+distanceFromRecentHigh
+distanceFromRecentLow
+gapChange
+relativeMarketPerformance
+eventImportance
+timeSinceLastSeen
+```
+
+Generate:
+
+```text
+attentionScore
+importance
+changeType
+explanation
+```
+
+Example:
+
+```json
+{
+  "symbol": "RELIANCE",
+  "attentionScore": 92,
+  "importance": "high",
+  "changeType": "momentum",
+  "signals": [
+    "price_move",
+    "volume_spike",
+    "recent_high"
+  ]
+}
+```
+
+Make the scoring algorithm deterministic and transparent.
+
+---
+
+# 11. ATTENTION SCORE
+
+Create an internal 0–100 score.
+
+Possible weighting:
+
+```text
+Price movement              30%
+Abnormal volume              20%
+Volatility change            15%
+Recent high/low proximity    10%
+Market-relative movement     10%
+Gap movement                  5%
+Event importance             10%
+```
+
+These values are starting points.
+
+Tune them based on product behavior.
+
+The important thing is:
+
+**Attention Score ≠ prediction score.**
+
+It means:
+
+> "This changed enough that you should probably look at it."
+
+---
+
+# 12. FIRST-OPEN EXPERIENCE
+
+The application must have a premium opening animation.
+
+Do NOT immediately show a dashboard.
+
+Opening sequence:
+
+### Stage 1
+
+Dark screen.
+
+A subtle market grid appears.
+
+### Stage 2
+
+A single financial graph begins drawing across the screen.
+
+The graph moves organically.
+
+### Stage 3
+
+Tiny data points appear.
+
+Volume bars subtly emerge.
+
+### Stage 4
+
+The graph accelerates slightly.
+
+### Stage 5
+
+The graph transforms into the main application.
+
+The transition should visually communicate:
+
+```text
+MARKET DATA
+     ↓
+MOVEMENT
+     ↓
+CHANGE
+     ↓
+ATTENTION
+     ↓
+WATCHLIST
+```
+
+Duration:
+
+**~1–2 seconds**
+
+Allow users to skip it.
+
+The main application must load independently and the animation must never block critical functionality.
+
+---
+
+# 13. VISUAL DESIGN
+
+Use a premium dark interface.
+
+Design language:
+
+* near-black background
+* charcoal surfaces
+* soft white typography
+* subtle borders
+* restrained gradients
+* minimal green/red
+* atmospheric depth
+* generous whitespace
+
+Suggested font:
+
+**Geist / Inter**
+
+Do NOT use:
+
+* excessive neon
+* crypto aesthetics
+* giant glowing buttons
+* excessive glassmorphism
+* random gradients
+* excessive rounded cards
+* gaming aesthetics
+* generic AI dashboard styling
+
+Think:
+
+**Apple × Linear × Bloomberg × premium data visualization**
+
+but create an original identity.
+
+---
+
+# 14. 3D DESIGN
+
+Use 3D depth subtly.
+
+Possible effects:
+
+* perspective market graph
+* cursor-based parallax
+* depth layers
+* floating data points
+* subtle camera movement
+* layered charts
+
+Keep GPU usage reasonable.
+
+Respect:
+
+```text
+prefers-reduced-motion
+```
+
+If reduced motion is enabled, disable/reduce:
+
+* parallax
+* 3D movement
+* scroll-linked effects
+* graph animations
+
+---
+
+# 15. SCROLL EXPERIENCE
+
+Scrolling should be part of the product.
+
+Do NOT simply create:
+
+```text
+Hero
+Cards
+Cards
+Cards
+Footer
+```
+
+Instead create scroll choreography.
+
+Example:
+
+### Hero
+
+Large market visualization.
+
+As the user scrolls:
+
+* graph moves
+* perspective changes
+* graph compresses
+* important points become highlighted
+* graph transitions into Market Pulse
+
+### Market Pulse
+
+As the user scrolls:
+
+* events appear progressively
+* mini charts reveal themselves
+* information transitions smoothly
+
+### Watchlist
+
+Stocks subtly move into focus.
+
+Use:
+
+* sticky sections
+* IntersectionObserver
+* Motion
+* layout transitions
+
+Do NOT hijack scrolling.
+
+Normal browser scrolling must remain usable.
+
+---
+
+# 16. MAIN NAVIGATION
+
+Create:
+
+```text
+MARKET WATCH
+```
+
+or another premium product name.
+
+Navigation:
+
+```text
+Overview
+Watchlist
+Market Pulse
+Discover
+Search
+```
+
+Keep navigation minimal.
+
+---
+
+# 17. HERO
+
+Hero should say:
+
+```text
+Good evening.
+
+Here's what changed.
+```
+
+Then:
+
+```text
+You were away for 7h 42m
+
+3 meaningful changes
+```
+
+Show:
+
+```text
+2 positive
+1 negative
+```
+
+Do not overload this section.
+
+---
+
+# 18. MARKET PULSE
+
+This is the primary screen.
+
+Show the most important changes.
+
+Example:
+
+```text
+MARKET PULSE
+
+You were away for 7h 42m
+
+01
+RELIANCE
++3.82%
+Volume 2.4× normal
+
+02
+TCS
+30-day high
+
+03
+HDFCBANK
+-2.71%
+Unusual volatility
+```
+
+Every item should have:
+
+* stock name
+* symbol
+* movement
+* mini chart
+* timestamp
+* attention score
+* reason
+* action
+
+---
+
+# 19. WHY?
+
+Every major alert should have a small:
+
+**Why?**
+
+interaction.
+
+Example:
+
+```text
+Why?
+```
+
+opens:
+
+```text
+Why RELIANCE?
+
++3.82% price movement
+2.4× normal volume
+Near recent high
+
+Attention score: 92
+
+We highlighted this because the
+movement is significantly larger
+than its recent normal behavior.
+```
+
+This is critical for trust.
+
+---
+
+# 20. WATCHLIST
+
+Watchlists should feel intelligent.
+
+Example:
+
+```text
+My Stocks
+
+RELIANCE
+₹2,431.20
++3.82%
+Attention 92
+
+TCS
+₹3,812.40
++1.91%
+Attention 74
+
+HDFCBANK
+₹1,847.20
+-2.71%
+Attention 61
+```
+
+Do NOT make every stock equally visually prominent.
+
+High-attention stocks should naturally attract attention.
+
+---
+
+# 21. MULTIPLE WATCHLISTS
+
+Allow:
+
+```text
+My Stocks
+Long Term
+Indian Banks
+Technology
+```
+
+Users can:
+
+* create
+* rename
+* delete
+* reorder
+* add/remove stocks
+
+Persist everything.
+
+---
+
+# 22. STOCK SEARCH
+
+Implement:
+
+**Ctrl + K**
+
+or:
+
+**⌘ + K**
+
+to open command search.
+
+Search should find:
+
+* symbol
+* company
+* partial company name
+
+Example:
+
+```text
+Tata
+```
+
+returns:
+
+```text
+TCS
+Tata Motors
+Tata Steel
+Titan
+```
+
+Search results should animate smoothly.
+
+---
+
+# 23. STOCK DETAIL
+
+Clicking a stock opens a beautiful detail view.
+
+Example:
+
+```text
+RELIANCE
+
+₹2,431.20
+
++3.82%
+```
+
+Then:
+
+### PRICE
+
+Large interactive chart.
+
+### VOLUME
+
+Volume visualization.
+
+### WHAT CHANGED?
+
+Compare:
+
+```text
+Last time you checked
+₹2,341
+
+Now
+₹2,431
+```
+
+Then:
+
+```text
++3.8% since your last visit
+```
+
+And:
+
+```text
+WHY IT MATTERS
+
+Volume is 2.4× normal
+and price crossed the
+recent high.
+```
+
+---
+
+# 24. CHART INTERACTION
+
+Charts should support:
+
+* hover
+* crosshair
+* tooltip
+* timeframe switching
+* smooth transitions
+* volume
+* high/low indicators where useful
+
+Do not overload charts with indicators.
+
+---
+
+# 25. MARKET OVERVIEW
+
+Keep this compact.
+
+Show:
+
+```text
+NIFTY 50
+SENSEX
+NIFTY BANK
+```
+
+and optionally:
+
+```text
+NASDAQ
+S&P 500
+DOW
+```
+
+depending on available data.
+
+The question being answered:
+
+> "What is the overall market doing?"
+
+not:
+
+> "Show me every market statistic."
+
+---
+
+# 26. RETURN / SESSION LOGIC
+
+When the user leaves:
+
+store:
+
+```text
+lastSeenAt
+```
+
+Also store the last observed state of watched stocks.
+
+When they return:
+
+```text
+current state
+      vs
+previous user snapshot
+```
+
+Calculate meaningful changes.
+
+Example:
+
+```text
+You were away for 18h 24m.
+
+5 changes detected.
+
+3 deserve attention.
+```
+
+---
+
+# 27. EVENT MANAGEMENT
+
+Users should be able to:
+
+* acknowledge
+* dismiss
+* save
+* open stock
+
+If an event is dismissed, don't keep showing it repeatedly.
+
+Persist this state.
+
+---
+
+# 28. DATA STATES
+
+Clearly distinguish:
+
+### LIVE
+
+Current data.
+
+### DELAYED
+
+Data has a known delay.
+
+### STALE
+
+Data has not updated recently.
+
+### UNAVAILABLE
+
+Provider failed.
+
+Never label simulated/mock data as live.
+
+For mock mode:
+
+```text
+SIMULATED MARKET DATA
+```
+
+For delayed data:
+
+```text
+MARKET DATA · DELAYED
+```
+
+---
+
+# 29. MOCK MARKET DATA
+
+The application MUST work even without external API keys.
+
+Create:
+
+```text
+MockMarketDataProvider
+```
+
+Use deterministic seeded data.
+
+Do NOT randomly generate a new market on every page refresh.
+
+The mock market should have a timeline.
+
+Example:
+
+```text
+09:15
+Market opens
+
+10:10
+RELIANCE rises
+
+11:20
+TCS breaks recent high
+
+12:40
+HDFCBANK volatility increases
+```
+
+This allows the judges to experience the "return later" functionality.
+
+---
+
+# 30. INITIAL STOCK UNIVERSE
+
+Seed:
+
+```text
+RELIANCE
+TCS
+HDFCBANK
+INFY
+ICICIBANK
+SBIN
+BHARTIARTL
+ITC
+LT
+TATAMOTORS
+TITAN
+```
+
+Market indices:
+
+```text
+NIFTY 50
+SENSEX
+NIFTY BANK
+```
+
+---
+
+# 31. AUTHENTICATION
+
+Use Supabase Auth if available.
+
+Support:
+
+* email/password
+* Google login if easy to configure
+
+For development/demo mode, allow a guest/demo account if authentication configuration is unavailable.
+
+The demo must remain functional.
+
+---
+
+# 32. API ROUTES
+
+Create clean endpoints such as:
+
+```text
+GET    /api/stocks/search
+GET    /api/stocks/[symbol]
+GET    /api/stocks/[symbol]/history
+
+GET    /api/watchlists
+POST   /api/watchlists
+PATCH  /api/watchlists/[id]
+DELETE /api/watchlists/[id]
+
+POST   /api/watchlists/[id]/stocks
+DELETE /api/watchlists/[id]/stocks/[symbol]
+
+GET    /api/market-pulse
+GET    /api/market/overview
+
+POST   /api/events/[id]/acknowledge
+POST   /api/events/[id]/dismiss
+
+GET    /api/session/changes
+POST   /api/session/check-in
+```
+
+Validate all inputs.
+
+Return useful error messages.
+
+---
+
+# 33. FRONTEND COMPONENT ARCHITECTURE
+
+Create reusable components.
+
+Example:
+
+```text
+components/
+  layout/
+  navigation/
+  market/
+  watchlist/
+  charts/
+  pulse/
+  stock/
+  search/
+  animations/
+  ui/
+```
+
+Examples:
+
+```text
+MarketPulse
+ChangeCard
+AttentionScore
+StockCard
+StockChart
+MarketOverview
+Watchlist
+WatchlistSwitcher
+CommandSearch
+StockDetail
+WhyThisMatters
+MarketStatus
+PageTransition
+MarketIntro
+```
+
+Do not create massive monolithic components.
+
+---
+
+# 34. STATE MANAGEMENT
+
+Use a lightweight approach.
+
+Prefer:
+
+**React state + Server State / TanStack Query**
+
+where appropriate.
+
+Do not introduce Redux unless genuinely necessary.
+
+Use optimistic updates for:
+
+* adding stocks
+* removing stocks
+* dismissing events
+* reordering watchlists
+
+---
+
+# 35. CACHING
+
+Market data should not be fetched unnecessarily.
+
+Use:
+
+* server-side caching
+* request deduplication
+* appropriate revalidation
+* client caching
+
+Avoid calling the market API on every component render.
+
+---
+
+# 36. PERFORMANCE
+
+Performance is extremely important.
+
+Implement:
+
+* lazy loading
+* dynamic imports for Three.js
+* chart optimization
+* memoization where useful
+* virtualization for large watchlists
+* debounced search
+* GPU-friendly transforms
+* IntersectionObserver
+* minimal client-side JavaScript where possible
+
+The 3D intro should not block the main application.
+
+---
+
+# 37. ERROR HANDLING
+
+Create elegant states for:
+
+```text
+Loading
+Empty
+Error
+Offline
+Stale
+Delayed
+No results
+API unavailable
+```
+
+Do not show ugly generic errors.
+
+Example:
+
+> **Market data is taking a moment.**
+>
+> We're using your last available snapshot.
+
+---
+
+# 38. RESPONSIVE DESIGN
+
+Desktop-first but fully responsive.
+
+Desktop:
+
+Use large cinematic layouts.
+
+Tablet:
+
+Reduce depth and spacing.
+
+Mobile:
+
+Redesign hierarchy rather than simply shrinking desktop.
+
+Mobile priority:
+
+```text
+Market Pulse
+↓
+Important changes
+↓
+Watchlist
+↓
+Stock details
+```
+
+---
+
+# 39. ACCESSIBILITY
+
+Implement:
+
+* semantic HTML
+* keyboard navigation
+* focus states
+* ARIA labels where necessary
+* sufficient contrast
+* reduced-motion support
+* keyboard-accessible charts/actions
+
+Do not rely solely on red/green to communicate movement.
+
+Use:
+
+```text
+↑
+↓
++
+-
+```
+
+and text labels.
+
+---
+
+# 40. FINANCIAL SAFETY / LANGUAGE
+
+This application is an information and monitoring tool.
+
+Do NOT claim:
+
+```text
+BUY THIS STOCK
+SELL THIS STOCK
+GUARANTEED PROFIT
+THIS WILL RISE
+```
+
+Instead use:
+
+```text
+Deserves attention
+Unusual movement
+Meaningful change
+Higher activity
+Momentum increased
+Volatility increased
+```
+
+The system surfaces information; it does not provide guaranteed investment predictions.
+
+---
+
+# 41. DEMO MODE
+
+Create a polished demo scenario.
+
+The judge opens the application.
+
+### Step 1
+
+Cinematic graph animation.
+
+### Step 2
+
+Dashboard appears.
+
+```text
+Good evening.
+
+You were away for 7h 42m.
+
+3 meaningful changes.
+```
+
+### Step 3
+
+RELIANCE appears as highest priority.
+
+### Step 4
+
+Judge clicks it.
+
+The stock detail page shows:
+
+```text
+Last seen
+₹2,341
+
+Now
+₹2,431
+
++3.82%
+```
+
+### Step 5
+
+Show:
+
+```text
+Why?
+
+2.4× normal volume
+Recent high crossed
+Significant price movement
+```
+
+### Step 6
+
+Return to watchlist.
+
+### Step 7
+
+Add TATAMOTORS.
+
+### Step 8
+
+Refresh.
+
+Everything persists.
+
+This should demonstrate the core innovation within approximately one minute.
+
+---
+
+# 42. DESIGN QUALITY BAR
+
+Before finishing, audit the application.
+
+Remove:
+
+* unnecessary cards
+* meaningless metrics
+* redundant buttons
+* excessive borders
+* excessive rounded rectangles
+* random gradients
+* excessive animations
+* decorative UI that provides no meaning
+
+Ask:
+
+> "Does this element help the user understand the market?"
+
+If not, remove it.
+
+---
+
+# 43. ANIMATION QUALITY BAR
+
+Animations should have:
+
+* consistent easing
+* consistent duration
+* meaningful hierarchy
+* interruption handling
+* reduced-motion fallback
+
+Avoid:
+
+* bouncing everything
+* spinning everything
+* constant movement
+* distracting background animation
+
+Motion should communicate:
+
+**change, hierarchy, continuity, feedback.**
+
+---
+
+# 44. DESIGN TOKENS
+
+Create a centralized design system.
+
+Define:
+
+```text
+colors
+spacing
+radius
+typography
+shadows
+motion durations
+easing curves
+z-index
+```
+
+Do not scatter arbitrary values throughout the codebase.
+
+---
+
+# 45. SECURITY
+
+Implement:
+
+* environment variables
+* server-side secrets
+* API validation
+* authentication checks
+* authorization checks
+* database row-level security where appropriate
+* rate limiting where appropriate
+* input sanitization
+
+A user must only access their own watchlists and events.
+
+---
+
+# 46. SCALABILITY
+
+Design so the application can eventually support:
+
+```text
+10 users
+→
+1,000 users
+→
+100,000 users
+```
+
+Avoid architecture that assumes one user.
+
+Market data should be fetched centrally and reused where possible rather than every user independently requesting the same market data.
+
+Think:
+
+```text
+Market Provider
+      ↓
+Market Data Cache
+      ↓
+Shared Market Snapshots
+      ↓
+User-specific intelligence
+```
+
+---
+
+# 47. FOLDER STRUCTURE
+
+Use a clean structure similar to:
+
+```text
+app/
+  page.tsx
+  overview/
+  watchlist/
+  stock/[symbol]/
+  discover/
+  api/
+
+components/
+  ui/
+  charts/
+  market/
+  pulse/
+  watchlist/
+  stock/
+  navigation/
+  animations/
+
+lib/
+  db/
+  market/
+  intelligence/
+  gemini/
+  auth/
+  utils/
+
+services/
+  market-data/
+  meaningful-change/
+  attention-score/
+
+prisma/
+  schema.prisma
+
+public/
+  assets/
+```
+
+Adapt this to Next.js conventions.
+
+---
+
+# 48. ENVIRONMENT CONFIGURATION
+
+Create:
+
+```text
+.env.example
+```
+
+with:
+
+```env
+TWELVE_DATA_API_KEY=
+
+GEMINI_API_KEY=
+
+DATABASE_URL=
+DIRECT_URL=
+
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+Clearly document which values are:
+
+```text
+required
+optional
+demo-only
+server-only
+client-safe
+```
+
+---
+
+# 49. README
+
+Create a complete README explaining:
+
+* product concept
+* architecture
+* tech stack
+* setup
+* environment variables
+* database setup
+* API setup
+* mock mode
+* Gemini setup
+* Twelve Data setup
+* how meaningful change works
+* how attention score works
+* deployment
+
+Also explain how to switch:
+
+```text
+Mock → Twelve Data
+```
+
+---
+
+# 50. IMPLEMENTATION ORDER
+
+Do NOT try to build everything randomly.
+
+Build in this order:
+
+### PHASE 1
+
+Project setup
+
+Next.js
+TypeScript
+Tailwind
+Prisma
+Supabase
+environment variables
+
+### PHASE 2
+
+Database schema
+
+### PHASE 3
+
+Mock market-data provider
+
+### PHASE 4
+
+Watchlist CRUD
+
+### PHASE 5
+
+Market Pulse engine
+
+### PHASE 6
+
+Attention Score
+
+### PHASE 7
+
+Return/session comparison
+
+### PHASE 8
+
+Stock detail page
+
+### PHASE 9
+
+Twelve Data integration
+
+### PHASE 10
+
+Gemini explanations
+
+### PHASE 11
+
+Charts
+
+### PHASE 12
+
+Premium visual design
+
+### PHASE 13
+
+3D intro
+
+### PHASE 14
+
+Scroll choreography
+
+### PHASE 15
+
+Responsive/mobile
+
+### PHASE 16
+
+Performance/accessibility/security audit
+
+---
+
+# 51. IMPORTANT DEVELOPMENT RULE
+
+Do not sacrifice functionality for visual effects.
+
+Priority:
+
+```text
+1. Working product
+2. Correct market logic
+3. Persistence
+4. Meaningful-change intelligence
+5. UX
+6. Visual polish
+7. Advanced animation
+8. 3D
+```
+
+If a visual effect hurts performance or usability, remove it.
+
+---
+
+# 52. FINAL PRODUCT FEEL
+
+The final application should feel like:
+
+> **A calm intelligence layer between the user and the market.**
+
+Not a trading terminal.
+
+Not a spreadsheet.
+
+Not a crypto dashboard.
+
+Not a generic SaaS dashboard.
+
+The user should open it and immediately understand:
+
+### WHAT CHANGED?
+
+### WHY DOES IT MATTER?
+
+### WHAT SHOULD I LOOK AT?
+
+That is the product.
+
+Build the application end-to-end now.
+
+Do not stop at static mockups.
+
+Do not create fake buttons.
+
+Do not create dead pages.
+
+Every important interaction must work.
+
+Use realistic mock data whenever an external service is unavailable.
+
+Make the final application **demo-ready, responsive, polished, maintainable, and production-oriented.**

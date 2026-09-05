@@ -1,0 +1,179 @@
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+import { BASE_STOCKS } from './marketEngine.js';
+
+dotenv.config();
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY || '';
+
+// Helper to create a user-scoped client that strictly respects PostgreSQL RLS
+export function createUserClient(token: string) {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  });
+}
+
+// Admin client for server-side trusted tasks only
+const adminClient = createClient(supabaseUrl, supabaseSecretKey);
+
+export const supabaseRepo = {
+  /**
+   * Seed the public.stocks table using Admin privileges.
+   */
+  async ensureStocksSeeded() {
+    console.log('[Supabase] Verifying master stock data...');
+    const stocksToSeed = BASE_STOCKS.map(s => ({
+      symbol: s.symbol,
+      name: s.name,
+      exchange: s.exchange,
+      sector: s.sector
+    }));
+
+    const { error } = await adminClient
+      .from('stocks')
+      .upsert(stocksToSeed, { onConflict: 'symbol' });
+
+    if (error) {
+      console.error('[Supabase] Failed to seed stocks:', error.message);
+    } else {
+      console.log('[Supabase] Stock data verified in DB.');
+    }
+  },
+
+  /**
+   * Fetch all watchlists for a user.
+   */
+  async getWatchlists(token: string) {
+    const db = createUserClient(token);
+    
+    // Attempt to init default watchlist — may fail if the user profile doesn't exist yet (expected in demo mode)
+    const { error: initError } = await db.rpc('ensure_default_watchlist');
+    if (initError && !initError.message.includes('foreign key')) {
+      console.warn('[Supabase] ensure_default_watchlist:', initError.message);
+    }
+
+    // Fetch watchlists
+    const { data: watchlists, error } = await db
+      .from('watchlists')
+      .select(`
+        id,
+        name,
+        is_default,
+        created_at,
+        updated_at,
+        watchlist_items (
+          stocks ( symbol )
+        )
+      `)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    // Fetch active watchlist ID from profile
+    const { data: profile } = await db
+      .from('profiles')
+      .select('active_watchlist_id')
+      .single();
+
+    const formattedWatchlists = (watchlists || []).map((w: any) => ({
+      id: w.id,
+      name: w.name,
+      isDefault: w.is_default,
+      createdAt: new Date(w.created_at).getTime(),
+      updatedAt: new Date(w.updated_at).getTime(),
+      symbols: w.watchlist_items
+        ?.map((item: any) => item.stocks?.symbol)
+        .filter(Boolean) || []
+    }));
+
+    return {
+      watchlists: formattedWatchlists,
+      activeId: profile?.active_watchlist_id || formattedWatchlists[0]?.id || null
+    };
+  },
+
+  /**
+   * Create a new watchlist using our atomic RPC.
+   */
+  async createWatchlist(token: string, name: string, symbols: string[]) {
+    const db = createUserClient(token);
+    const { data, error } = await db.rpc('create_watchlist_with_items', {
+      p_name: name,
+      p_symbols: symbols,
+      p_is_default: false
+    });
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Update an existing watchlist.
+   */
+  async updateWatchlist(token: string, watchlistId: string, name?: string, symbols?: string[], setActive?: boolean) {
+    const db = createUserClient(token);
+
+    // If changing name and/or symbols, use the RPC
+    // If only setActive is true, we just update the profile
+    if (name || symbols) {
+      // If name isn't provided but we are replacing items, we need the current name to pass to RPC
+      let finalName = name;
+      if (!finalName) {
+        const { data: wl } = await db.from('watchlists').select('name').eq('id', watchlistId).single();
+        finalName = wl?.name || 'Updated Watchlist';
+      }
+      
+      const { error } = await db.rpc('replace_watchlist_items', {
+        p_watchlist_id: watchlistId,
+        p_name: finalName,
+        p_symbols: symbols || []
+      });
+      if (error) throw error;
+    }
+
+    if (setActive) {
+      const { data: { user } } = await db.auth.getUser();
+      if (user) {
+        await db.from('profiles').update({ active_watchlist_id: watchlistId }).eq('id', user.id);
+      }
+    }
+
+    // Return the updated shape by re-fetching
+    const { watchlists } = await this.getWatchlists(token);
+    return watchlists.find(w => w.id === watchlistId);
+  },
+
+  /**
+   * Delete a watchlist.
+   */
+  async deleteWatchlist(token: string, watchlistId: string) {
+    const db = createUserClient(token);
+    
+    // First, check if it's the default watchlist (RLS might allow delete, but app logic forbids)
+    const { data: wl } = await db.from('watchlists').select('is_default').eq('id', watchlistId).single();
+    if (wl?.is_default) {
+      throw new Error('Cannot delete the default watchlist');
+    }
+
+    const { error } = await db.from('watchlists').delete().eq('id', watchlistId);
+    if (error) throw error;
+
+    // We must return the new active ID (fallback to first available)
+    const { watchlists } = await this.getWatchlists(token);
+    let newActiveId = watchlists[0]?.id || null;
+    
+    // Update profile if active was deleted
+    const { data: { user } } = await db.auth.getUser();
+    if (user && newActiveId) {
+      await db.from('profiles').update({ active_watchlist_id: newActiveId }).eq('id', user.id);
+    }
+    
+    return newActiveId;
+  }
+};
