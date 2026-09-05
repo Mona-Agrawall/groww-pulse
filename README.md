@@ -5,6 +5,8 @@ Pulse is a smart market watchlist built around a single question: **"What change
 
 A conventional watchlist answers *"what is the current price?"*. Pulse answers *"what moved, why it moved, and whether that movement is worth your attention right now"* — personalised to the exact window of time since your last visit. It does this through a deterministic, multi-factor Attention Scoring Engine that runs server-side on every request, combined with a per-user price snapshot system that stores where prices were when you last checked.
 
+<img width="1919" height="1199" alt="image" src="https://github.com/user-attachments/assets/cb046d00-6c55-4624-b650-3ee99529e9a2" />
+
 ---
 
 ## 1. Product Overview
