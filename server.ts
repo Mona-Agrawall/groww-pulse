@@ -42,16 +42,15 @@ function buildFallbackNarrative(facts: any): string {
   return `${facts.symbol} moved ${sign}${facts.priceChangePct?.toFixed(1) ?? '0.0'}% with ${facts.volumeMultiple?.toFixed(1) ?? '1.0'}× its normal volume since your last visit ${facts.timeSinceLastSeen} ago.`;
 }
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+const app = express();
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-  app.use(express.json());
-  
-  // Seed stocks to DB automatically on startup
-  await supabaseRepo.ensureStocksSeeded();
+app.use(express.json());
 
-  // ── API Routes ─────────────────────────────────────────────────────────────
+// Seed stocks to DB automatically on startup (fire and forget for serverless)
+supabaseRepo.ensureStocksSeeded().catch(console.error);
+
+// ── API Routes ─────────────────────────────────────────────────────────────
 
   app.get('/api/health', (_req, res) => {
     res.json({
@@ -404,25 +403,29 @@ Response (one sentence only):`;
   });
 
   // ── Vite / Static ───────────────────────────────────────────────────────────
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (_req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+  if (!process.env.VERCEL) {
+    (async () => {
+      if (process.env.NODE_ENV !== 'production') {
+        const vite = await createViteServer({
+          server: { middlewareMode: true },
+          appType: 'spa',
+        });
+        app.use(vite.middlewares);
+      } else {
+        const distPath = path.join(process.cwd(), 'dist');
+        app.use(express.static(distPath));
+        app.get('*', (_req, res) => {
+          res.sendFile(path.join(distPath, 'index.html'));
+        });
+      }
+
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log(`[Pulse] Server running on http://0.0.0.0:${PORT}`);
+        console.log(`[Pulse] Gemini AI: ${process.env.GEMINI_API_KEY ? '✓ ready' : '✗ unavailable (deterministic fallback active)'}`);
+        console.log(`[Pulse] Demo mode: /api/demo/reset to restore canonical scenario`);
+      });
+    })().catch(console.error);
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[Pulse] Server running on http://0.0.0.0:${PORT}`);
-    console.log(`[Pulse] Gemini AI: ${process.env.GEMINI_API_KEY ? '✓ ready' : '✗ unavailable (deterministic fallback active)'}`);
-    console.log(`[Pulse] Demo mode: /api/demo/reset to restore canonical scenario`);
-  });
-}
-
-startServer();
+// Export the app for Vercel
+export default app;
