@@ -6,8 +6,8 @@
 /* ── Design Tokens ─────────────────────────────────────────────────────────── */
 @layer base {
   :root {
-    --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    --font-mono: 'Roboto Mono', 'SF Mono', 'Cascadia Mono', ui-monospace, monospace;
+    --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
 
     /* Primary Semantic Colors */
     --color-green: #00B386;
@@ -64,6 +64,7 @@
 
   /* ── Reduced motion support ────────────────────────────────────────────── */
   @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {
@@ -86,13 +87,16 @@
   width: 4px;
   height: 4px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
   border-radius: 9999px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-muted);
 }
@@ -101,57 +105,92 @@
 
 /* Subtle breathing glow — used on live indicators */
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.45; }
-  50%       { opacity: 0.9;  }
+
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
 }
+
 .animate-pulse-glow {
   animation: pulse-glow 3s var(--ease-standard) infinite;
 }
 
 /* Number counter morph animation */
 @keyframes number-up {
-  from { opacity: 0; transform: translateY(6px);  }
-  to   { opacity: 1; transform: translateY(0);     }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 .animate-number-up {
   animation: number-up var(--duration-fast) var(--ease-snappy) both;
 }
 
 /* Card enter */
 @keyframes card-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0);    }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 .animate-card-in {
   animation: card-in var(--duration-medium) var(--ease-snappy) both;
 }
 
 /* Shimmer for loading skeletons */
 @keyframes shimmer {
-  from { background-position: -400px 0; }
-  to   { background-position:  400px 0; }
+  from {
+    background-position: -400px 0;
+  }
+
+  to {
+    background-position: 400px 0;
+  }
 }
+
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--color-border-soft) 25%,
-    var(--color-border) 50%,
-    var(--color-border-soft) 75%
-  );
+  background: linear-gradient(90deg,
+      var(--color-border-soft) 25%,
+      var(--color-border) 50%,
+      var(--color-border-soft) 75%);
   background-size: 800px 100%;
   animation: shimmer 1.5s infinite;
 }
 
 /* Ticker horizontal scroll */
 @keyframes ticker-scroll {
-  from { transform: translateX(0);    }
-  to   { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
+
 .ticker-track {
   display: flex;
   animation: ticker-scroll 30s linear infinite;
   will-change: transform;
 }
+
 .ticker-track:hover {
   animation-play-state: paused;
 }
@@ -164,19 +203,22 @@
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-premium);
   transition: transform var(--duration-fast) var(--ease-snappy),
-              box-shadow var(--duration-fast) var(--ease-snappy),
-              border-color var(--duration-fast) var(--ease-snappy);
+    box-shadow var(--duration-fast) var(--ease-snappy),
+    border-color var(--duration-fast) var(--ease-snappy);
 }
+
 .premium-card-panel {
   background: var(--color-panel);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-premium);
 }
+
 .premium-card:hover {
   transform: scale(1.01);
   box-shadow: var(--shadow-premium-hover);
   border-color: var(--color-border-soft);
 }
+
 .inner-highlight {
   box-shadow: var(--inner-highlight);
 }
@@ -193,7 +235,7 @@
 /* Green glow — adapted for light mode (extremely subtle) */
 .glow-green {
   box-shadow: 0 0 12px var(--color-green-soft),
-              0 0 4px rgba(0, 179, 134, 0.1);
+    0 0 4px rgba(0, 179, 134, 0.1);
 }
 
 /* Hairline separator */
@@ -202,13 +244,22 @@
 }
 
 /* Attention-level left border accent */
-.attention-high   { border-left: 2px solid var(--color-green);  }
-.attention-medium { border-left: 2px solid var(--color-amber); }
-.attention-low    { border-left: 2px solid var(--color-border); }
+.attention-high {
+  border-left: 2px solid var(--color-green);
+}
+
+.attention-medium {
+  border-left: 2px solid var(--color-amber);
+}
+
+.attention-low {
+  border-left: 2px solid var(--color-border);
+}
 
 /* Monospace table-number alignment */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.015em;
 }
 
 /* Score bar fill transition */
@@ -218,12 +269,10 @@
 
 /* Demo mode banner top accent */
 .demo-banner {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-green-soft),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      var(--color-green-soft),
+      transparent);
   border-bottom: 1px solid var(--color-border);
 }
 

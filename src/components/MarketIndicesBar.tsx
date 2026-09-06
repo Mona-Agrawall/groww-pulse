@@ -14,7 +14,7 @@ export const MarketIndicesBar: React.FC<MarketIndicesBarProps> = ({ indices }) =
  return (
  <div className="w-full border-b border-[var(--color-border)] bg-[var(--color-background)] overflow-x-auto py-3 px-4 sm:px-6 lg:px-8">
  <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 min-w-max">
- <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-[var(--color-muted)] font-medium mr-2">
+ <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-normal text-[var(--color-muted)] font-medium mr-2">
  <span>Indices</span>
  </div>
 

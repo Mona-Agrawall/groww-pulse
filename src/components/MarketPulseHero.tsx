@@ -210,7 +210,7 @@ function FlagshipCard({ stock, onSelect, onWhy, isAcknowledged, onAck }: Flagshi
  <div>
  <div className="flex items-center gap-3 flex-wrap mb-2">
  <span className="text-[10px] font-mono text-[var(--color-faint)] tracking-[0.4em] uppercase">01</span>
- <span className="text-3xl sm:text-4xl font-normal text-[var(--color-ink)]">{stock.symbol}</span>
+ <span className="text-2xl font-semibold text-[var(--color-ink)]">{stock.symbol}</span>
  <span className="text-[10px] px-2 py-0.5 rounded bg-[var(--color-panel)] border border-[var(--color-border-soft)] text-[var(--color-muted)] font-mono">{stock.exchange}</span>
  <span className={`text-[9px] font-medium px-2 py-0.5 rounded-full uppercase ${isPos ? 'bg-[var(--color-green-soft)] text-[var(--color-green)]' : 'bg-[var(--color-red-soft)] text-[var(--color-red)]'}`}>
  {stock.scoreFactors[0]?.label?.split(' ').slice(0, 2).join(' ') || (isPos ? 'Momentum' : 'Reversal')}
@@ -224,16 +224,16 @@ function FlagshipCard({ stock, onSelect, onWhy, isAcknowledged, onAck }: Flagshi
  {/* Last check → now comparison */}
  <div className="flex items-center gap-8">
  <div>
- <div className="text-[9px] uppercase tracking-[0.3em] text-[var(--color-faint)] mb-0.5">Last seen</div>
+ <div className="text-[9px] uppercase tracking-normal text-[var(--color-faint)] mb-0.5">Last seen</div>
  <div className="font-mono text-[var(--color-muted)] text-sm tabular-nums">₹{stock.userDelta.previousPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
  </div>
  <div className="text-[var(--color-border)] font-mono" aria-hidden>→</div>
  <div>
- <div className="text-[9px] uppercase tracking-[0.3em] text-[var(--color-faint)] mb-0.5">Now</div>
+ <div className="text-[9px] uppercase tracking-normal text-[var(--color-faint)] mb-0.5">Now</div>
  <div className="font-mono text-[var(--color-ink)] font-medium text-sm tabular-nums">₹{stock.currentPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
  </div>
  <div>
- <div className="text-[9px] uppercase tracking-[0.3em] text-[var(--color-faint)] mb-0.5">Change</div>
+ <div className="text-[9px] uppercase tracking-normal text-[var(--color-faint)] mb-0.5">Change</div>
  <div className={`font-mono font-medium tabular-nums ${isPos ? 'text-[var(--color-green)]' : 'text-[var(--color-red)]'}`}>
  {isPos ? '+' : ''}{stock.userDelta.percentDiff.toFixed(2)}%
  </div>
@@ -244,7 +244,7 @@ function FlagshipCard({ stock, onSelect, onWhy, isAcknowledged, onAck }: Flagshi
  {/* Right: attention score + sparkline + actions */}
  <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-between md:min-w-[160px] gap-4">
  <div className="flex flex-col items-end">
- <div className="text-[9px] uppercase tracking-[0.3em] text-[var(--color-faint)] mb-1">Attention</div>
+ <div className="text-[9px] uppercase tracking-normal text-[var(--color-faint)] mb-1">Attention</div>
  <div className="flex items-center justify-center relative">
  <div className="absolute inset-0 border-b-2 border-[var(--color-border-soft)] w-[120%] -left-[10%] bottom-1" />
  <div 
@@ -341,8 +341,8 @@ export const MarketPulseHero: React.FC<MarketPulseHeroProps> = ({
 
  {/* ── Hero Header ──────────────────────────────────────────────────── */}
  <header className="mb-10">
- <div className="flex items-center justify-between mb-4">
- <div className="text-[10px] uppercase tracking-[0.4em] text-[var(--color-faint)] font-medium" aria-label="Section: The Briefing">
+ <div className="flex items-center justify-between mb-2">
+ <div className="text-[10px] uppercase tracking-normal text-[var(--color-faint)] font-medium" aria-label="Section: The Briefing">
  The Briefing
  </div>
  <button
@@ -357,7 +357,7 @@ export const MarketPulseHero: React.FC<MarketPulseHeroProps> = ({
  </button>
  </div>
 
- <h1 className="text-4xl sm:text-6xl lg:text-7xl font-normal leading-[0.95] text-[var(--color-ink)] mb-6">
+ <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold leading-tight text-[var(--color-ink)] mb-6">
  {getGreeting()}<br />
  <span className="text-[var(--color-muted)]">{pulse.meaningfulChangesCount} things changed meaningfully.</span>
  </h1>
@@ -372,18 +372,18 @@ export const MarketPulseHero: React.FC<MarketPulseHeroProps> = ({
  </div>
  <div className="flex flex-col gap-1">
  <span className="text-[10px] uppercase text-[var(--color-faint)]">High Attention</span>
- <span className="text-2xl sm:text-3xl font-normal text-[var(--color-ink)] ">{highAttentionSymbols}</span>
+ <span className="text-xl sm:text-2xl font-semibold text-[var(--color-ink)] ">{highAttentionSymbols}</span>
  </div>
  <div className="flex flex-col gap-1">
  <span className="text-[10px] uppercase text-[var(--color-faint)]">Volatility</span>
- <span className="text-2xl sm:text-3xl font-normal text-[var(--color-red)] ">{volatilitySymbol}</span>
+ <span className="text-xl sm:text-2xl font-semibold text-[var(--color-red)] ">{volatilitySymbol}</span>
  </div>
  </div>
  </header>
 
  {/* ── Priority Intelligence header ──────────────────────────────────── */}
- <div className="flex items-center justify-between gap-3 mb-4">
- <div className="flex items-center gap-3 flex-1 text-[10px] uppercase tracking-[0.25em] text-[var(--color-faint)] font-medium">
+ <div className="flex items-center justify-between gap-3 mb-2">
+ <div className="flex items-center gap-3 flex-1 text-[10px] uppercase tracking-normal text-[var(--color-faint)] font-medium">
  <span>Priority Intelligence</span>
  <div className="flex-1 h-px bg-[var(--color-border-soft)]" aria-hidden />
  </div>
@@ -445,7 +445,7 @@ export const MarketPulseHero: React.FC<MarketPulseHeroProps> = ({
  >
  <div className="flex items-center gap-3 text-xs text-[var(--color-muted)]">
  <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-green)] motion-safe-pulse" style={{ boxShadow: '0 0 6px var(--color-green-soft)' }} aria-hidden />
- <span className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-faint)] font-medium">Watchlist Ledger</span>
+ <span className="text-[10px] uppercase tracking-normal text-[var(--color-faint)] font-medium">Watchlist Ledger</span>
  <span>
  Overall:{' '}
  <strong className={`font-mono tabular-nums ${pulse.overallWatchlistChange >= 0 ? 'text-[var(--color-green)]' : 'text-[var(--color-red)]'}`}>

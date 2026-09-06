@@ -135,7 +135,7 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
  <div className="flex items-start gap-4 flex-wrap">
  <div>
  <div className="flex items-center gap-3 flex-wrap">
- <h1 className="text-3xl sm:text-4xl font-normal font-mono text-[var(--color-ink)]">{symbol}</h1>
+ <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--color-ink)]">{symbol}</h1>
  <span className="text-xs px-2 py-0.5 rounded bg-[var(--color-panel)] border border-[var(--color-border-soft)] text-[var(--color-muted)] font-mono">
  {stockDetail?.exchange || 'NSE'}
  </span>
@@ -176,7 +176,7 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
  <div className="p-5 rounded-2xl bg-[var(--color-panel)] border border-[var(--color-border-soft)]" role="region" aria-label="What changed since your last visit">
  <div className="flex items-center gap-2 mb-3">
  <Clock className="w-3.5 h-3.5 text-[var(--color-green)]" aria-hidden />
- <span className="text-[10px] font-mono font-medium uppercase tracking-[0.3em] text-[var(--color-green)]">
+ <span className="text-[10px] font-mono font-medium uppercase tracking-normal text-[var(--color-green)]">
  Since your last visit · {stockDetail.userDelta?.lastSeenTimeFormatted ?? '—'} ago
  </span>
  </div>
@@ -184,20 +184,20 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
  {/* Price comparison — the product's core UX */}
  <div className="flex flex-wrap items-center gap-6 sm:gap-10 mb-4">
  <div>
- <div className="text-[9px] uppercase tracking-[0.3em] text-[var(--color-faint)] mb-1">Last seen</div>
+ <div className="text-[9px] uppercase tracking-normal text-[var(--color-faint)] mb-1">Last seen</div>
  <div className="font-mono text-2xl text-[var(--color-muted)] font-normal tabular-nums">
  ₹{(stockDetail.userDelta?.previousPrice ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
  </div>
  </div>
  <div className="text-[var(--color-border)] font-mono text-xl" aria-hidden>→</div>
  <div>
- <div className="text-[9px] uppercase tracking-[0.3em] text-[var(--color-faint)] mb-1">Now</div>
+ <div className="text-[9px] uppercase tracking-normal text-[var(--color-faint)] mb-1">Now</div>
  <div className="font-mono text-2xl text-[var(--color-ink)] font-medium tabular-nums">
  ₹{(stockDetail.currentPrice ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
  </div>
  </div>
  <div>
- <div className="text-[9px] uppercase tracking-[0.3em] text-[var(--color-faint)] mb-1">Change</div>
+ <div className="text-[9px] uppercase tracking-normal text-[var(--color-faint)] mb-1">Change</div>
  <div className={`flex items-center gap-1 font-mono text-2xl font-medium tabular-nums ${(stockDetail.userDelta?.percentDiff ?? 0) >= 0 ? 'text-[var(--color-green)]' : 'text-[var(--color-red)]'}`}>
  {(stockDetail.userDelta?.percentDiff ?? 0) >= 0 ? <ArrowUpRight className="w-5 h-5" aria-hidden /> : <ArrowDownRight className="w-5 h-5" aria-hidden />}
  {(stockDetail.userDelta?.percentDiff ?? 0) >= 0 ? '+' : ''}{(stockDetail.userDelta?.percentDiff ?? 0).toFixed(2)}%
@@ -209,7 +209,7 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
  <div className="border-t border-[var(--color-border-soft)] pt-3">
  <div className="flex items-center gap-1.5 mb-1.5">
  <Sparkles className="w-3 h-3 text-[var(--color-green)]" aria-hidden />
- <span className="text-[9px] uppercase tracking-[0.3em] text-[var(--color-green)] opacity-80 font-medium">Why it matters</span>
+ <span className="text-[9px] uppercase tracking-normal text-[var(--color-green)] opacity-80 font-medium">Why it matters</span>
  </div>
  {aiLoading ? (
  <div className="flex items-center gap-2">
@@ -366,7 +366,7 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
  {/* ── Recent events for this stock ─────────────────────────────── */}
  {stockDetail.events && stockDetail.events.length > 0 && (
  <div className="space-y-2" role="region" aria-label="Recent events">
- <h3 className="text-[10px] uppercase tracking-[0.25em] text-[var(--color-faint)] font-medium">
+ <h3 className="text-[10px] uppercase tracking-normal text-[var(--color-faint)] font-medium">
  Events & Intraday Signals
  </h3>
  <div className="space-y-1.5">
