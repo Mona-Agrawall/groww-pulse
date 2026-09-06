@@ -1,9 +1,11 @@
-# Pulse — Smart Market Watchlist
+# Nazar - Keep an eye on what matters.
+
+> **Note:** Internal API routes, component filenames, and the repository URL retain the original 'Pulse' identifier; only the product-facing name changed to Nazar.
 ### Code, by Groww 2026 Submission
 
-Pulse is a smart market watchlist built around a single question: **"What changed while I was away, and does it actually matter?"**
+Nazar is a smart market watchlist built around a single question: **"What changed while I was away, and does it actually matter?"**
 
-A conventional watchlist answers *"what is the current price?"*. Pulse answers *"what moved, why it moved, and whether that movement is worth your attention right now"* — personalised to the exact window of time since your last visit. It does this through a deterministic, multi-factor Attention Scoring Engine that runs server-side on every request, combined with a per-user price snapshot system that stores where prices were when you last checked.
+A conventional watchlist answers *"what is the current price?"*. Nazar answers *"what moved, why it moved, and whether that movement is worth your attention right now"* — personalised to the exact window of time since your last visit. It does this through a deterministic, multi-factor Attention Scoring Engine that runs server-side on every request, combined with a per-user price snapshot system that stores where prices were when you last checked.
 
 ## LIVE DEPLOYED LINK - https://groww-pulse-iota.vercel.app/
 
@@ -24,9 +26,9 @@ A standard watchlist shows you current prices. It does not tell you:
 
 The result: users scan their entire watchlist on every visit, manually comparing prices they half-remember from yesterday. That cognitive overhead compounds across sessions.
 
-### What Pulse Does Differently
+### What Nazar Does Differently
 
-When a user returns to Pulse, the system:
+When a user returns to Nazar, the system:
 1. **Measures the exact time elapsed** since their last session (or a simulated absence)
 2. **Compares current market state against a per-user price snapshot** taken at their last visit — not just against yesterday's close
 3. **Runs a proprietary Attention Score** (0–100) for every watched stock, factoring in volume, volatility, technical breakouts, intraday reversals, and the personal delta since the user's last check
@@ -38,7 +40,7 @@ The output is a prioritised briefing, not a raw price feed.
 ### Primary User Journey
 
 ```
-User visits Pulse
+User visits Nazar
   → Signs in (or skips auth for demo mode)
   → Session records current prices as baseline snapshot
   → User browses the watchlist, then leaves
@@ -46,11 +48,11 @@ User visits Pulse
 [Time passes — market moves]
 
 User returns
-  → Pulse calculates elapsed time since last visit
+  → Nazar calculates elapsed time since last visit
   → Compares current prices against stored snapshot prices
   → Runs Attention Engine on every watched stock
   → Presents sorted list: highest-attention stocks first
-  → Top Pulse card shows "You were away 7h 42m — 3 things changed meaningfully"
+  → Top Nazar card shows "You were away 7h 42m — 3 things changed meaningfully"
   → User opens any stock → sees "Last seen at ₹2,341 → Now ₹2,431 (+3.8%)" + why it matters
   → User can acknowledge, dismiss, or deep-dive events
   → User taps "Sync Now" → current prices become new baseline
@@ -63,7 +65,7 @@ User returns
 ### Watchlist Management
 Create, rename, delete, and switch between multiple named watchlists. Add or remove stocks from a searchable universe (currently 14 symbols across NSE and NASDAQ). The default watchlist auto-initialises with major NIFTY 50 constituents for authenticated users via a PostgreSQL RPC.
 
-### Market Pulse Hero
+### Nazar Hero
 The primary entry screen. Surfaces the top 3 highest-attention stocks from the active watchlist, the total count of meaningful changes, and a plain-English summary narrative ("You were away for 7h 42m..."). This is the "what happened while I was away" answer.
 
 ### Attention Score (0–100)
@@ -91,7 +93,7 @@ Full Supabase Auth (email/password) with server-side JWT verification. All watch
 
 ## 3. What Counts as a "Meaningful Change"?
 
-This is the core engineering problem Pulse addresses. The answer is implemented in `MeaningfulChangeEngine.calculateAttention()` in [`server/marketEngine.ts`](./server/marketEngine.ts).
+This is the core engineering problem Nazar addresses. The answer is implemented in `MeaningfulChangeEngine.calculateAttention()` in [`server/marketEngine.ts`](./server/marketEngine.ts).
 
 ### Scoring Model
 
@@ -109,7 +111,7 @@ Every stock starts at a baseline score of **20**. Five independent factors can a
 | **User Delta** | Price moved ≥ 2.5% since user's last visit (personal) | +16 |
 
 **Score → Level mapping:**
-- ≥ 75: `high` (shows in Pulse hero, top priority)
+- ≥ 75: `high` (shows in Nazar hero, top priority)
 - 50–74: `medium`
 - < 50: `low`
 
@@ -139,7 +141,7 @@ Every stock starts at a baseline score of **20**. Five independent factors can a
 Landing screen presents email/password sign-in and sign-up. A "Skip for now" link at the bottom of the card activates demo mode — the user enters the full application immediately using server-side in-memory session data.
 
 ### Navigation
-Four tabs in the header: **Pulse** (briefing + watchlist), **Watchlist** (watchlist standalone), **Timeline** (chronological event feed), **Indices** (NIFTY 50, SENSEX, BANK NIFTY, GIFT NIFTY cards).
+Four tabs in the header: **Nazar** (briefing + watchlist), **Watchlist** (watchlist standalone), **Timeline** (chronological event feed), **Indices** (NIFTY 50, SENSEX, BANK NIFTY, GIFT NIFTY cards).
 
 ### Demo Mode Banner
 A persistent top bar indicates demo mode is active, displays the canonical scenario summary, and provides a "Reset Demo" button to restore the canonical 7h 42m scenario if the user has changed the time travel setting.

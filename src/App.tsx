@@ -403,7 +403,7 @@ function MarketPulseApp() {
  <footer className="relative z-10 border-t border-[var(--color-border)] bg-[var(--color-background)] py-6 px-4">
  <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--color-muted)]">
  <div className="flex items-center gap-2.5">
- <span className="font-mono text-[var(--color-ink-soft)] font-medium text-xs">PULSE 2026</span>
+ <span className="font-mono text-[var(--color-ink-soft)] font-medium text-xs">NAZAR 2026</span>
  <span className="text-[var(--color-border)]">|</span>
  <span className="font-normal text-[var(--color-muted)] text-[11px]">Intelligent Market Attention · Meaningful Change Engine</span>
  </div>
