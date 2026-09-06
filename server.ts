@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import {
   MarketDataProvider,
-  userSession,
+  getOrCreateSession,
   BASE_STOCKS,
   formatDuration
 } from './server/marketEngine.js';
@@ -76,10 +76,11 @@ supabaseRepo.ensureStocksSeeded().catch(console.error);
         const repoData = await supabaseRepo.getWatchlists(req.token);
         return res.json({ success: true, data: repoData.watchlists, activeId: repoData.activeId });
       } else {
+        const session = getOrCreateSession(req.headers['x-session-id'] as string | undefined);
         return res.json({
           success: true,
-          data: userSession.watchlists,
-          activeId: userSession.activeWatchlistId,
+          data: session.watchlists,
+          activeId: session.activeWatchlistId,
         });
       }
     } catch (err: any) {
@@ -97,6 +98,7 @@ supabaseRepo.ensureStocksSeeded().catch(console.error);
         const data = await supabaseRepo.createWatchlist(req.token, name.trim().slice(0, 50), symbols || []);
         return res.json({ success: true, data });
       } else {
+        const session = getOrCreateSession(req.headers['x-session-id'] as string | undefined);
         const newWl = {
           id: `wl_${Date.now()}`,
           name: name.trim().slice(0, 50),
@@ -105,8 +107,8 @@ supabaseRepo.ensureStocksSeeded().catch(console.error);
           createdAt: Date.now(),
           updatedAt: Date.now(),
         };
-        userSession.watchlists.push(newWl);
-        userSession.activeWatchlistId = newWl.id;
+        session.watchlists.push(newWl);
+        session.activeWatchlistId = newWl.id;
         return res.json({ success: true, data: newWl });
       }
     } catch (err: any) {
@@ -122,12 +124,13 @@ supabaseRepo.ensureStocksSeeded().catch(console.error);
         const wl = await supabaseRepo.updateWatchlist(req.token, id, name, symbols, setActive);
         return res.json({ success: true, data: wl });
       } else {
-        const wl = userSession.watchlists.find((w) => w.id === id);
+        const session = getOrCreateSession(req.headers['x-session-id'] as string | undefined);
+        const wl = session.watchlists.find((w) => w.id === id);
         if (!wl) return res.status(404).json({ error: 'Watchlist not found' });
         if (name && typeof name === 'string') wl.name = name.trim().slice(0, 50);
         if (Array.isArray(symbols)) wl.symbols = symbols.filter((s: any) => typeof s === 'string');
         wl.updatedAt = Date.now();
-        if (setActive) userSession.activeWatchlistId = id;
+        if (setActive) session.activeWatchlistId = id;
         return res.json({ success: true, data: wl });
       }
     } catch (err: any) {
@@ -142,14 +145,15 @@ supabaseRepo.ensureStocksSeeded().catch(console.error);
         const activeId = await supabaseRepo.deleteWatchlist(req.token, id);
         return res.json({ success: true, activeId });
       } else {
-        if (userSession.watchlists.length <= 1) {
+        const session = getOrCreateSession(req.headers['x-session-id'] as string | undefined);
+        if (session.watchlists.length <= 1) {
           return res.status(400).json({ error: 'Cannot delete the only watchlist' });
         }
-        userSession.watchlists = userSession.watchlists.filter((w) => w.id !== id);
-        if (userSession.activeWatchlistId === id) {
-          userSession.activeWatchlistId = userSession.watchlists[0].id;
+        session.watchlists = session.watchlists.filter((w) => w.id !== id);
+        if (session.activeWatchlistId === id) {
+          session.activeWatchlistId = session.watchlists[0].id;
         }
-        return res.json({ success: true, activeId: userSession.activeWatchlistId });
+        return res.json({ success: true, activeId: session.activeWatchlistId });
       }
     } catch (err: any) {
       res.status(400).json({ error: err.message });
@@ -160,24 +164,25 @@ supabaseRepo.ensureStocksSeeded().catch(console.error);
   app.get('/api/market/stocks', requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       let wl;
+      const session = getOrCreateSession(req.headers['x-session-id'] as string | undefined);
       if (req.token) {
         const { watchlists, activeId } = await supabaseRepo.getWatchlists(req.token);
         const wId = (req.query.watchlistId as string) || activeId;
         wl = watchlists.find((w: any) => w.id === wId) || watchlists[0];
       } else {
-        const watchlistId = (req.query.watchlistId as string) || userSession.activeWatchlistId;
-        wl = userSession.watchlists.find((w) => w.id === watchlistId) || userSession.watchlists[0];
+        const watchlistId = (req.query.watchlistId as string) || session.activeWatchlistId;
+        wl = session.watchlists.find((w) => w.id === watchlistId) || session.watchlists[0];
       }
-      const stocks = await MarketDataProvider.getStocks(wl?.symbols);
+      const stocks = await MarketDataProvider.getStocks(session, wl?.symbols);
       res.json({ success: true, data: stocks, watchlist: wl });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
   });
 
-  app.get('/api/market/stocks/all', async (_req, res) => {
+  app.get('/api/market/stocks/all', async (req, res) => {
     try {
-      res.json({ success: true, data: await MarketDataProvider.getStocks() });
+      res.json({ success: true, data: await MarketDataProvider.getStocks(getOrCreateSession(), []) });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -195,7 +200,8 @@ supabaseRepo.ensureStocksSeeded().catch(console.error);
   app.get('/api/market/stocks/:symbol', async (req, res) => {
     try {
       const symbol = req.params.symbol.toUpperCase();
-      const detail = await MarketDataProvider.getStockDetail(symbol, '1D');
+      const session = getOrCreateSession(req.headers['x-session-id'] as string | undefined);
+      const detail = await MarketDataProvider.getStockDetail(session, symbol, '1D');
       if (!detail) return res.status(404).json({ error: 'Stock not found' });
       res.json({ success: true, data: detail });
     } catch (err: any) {
@@ -207,15 +213,16 @@ supabaseRepo.ensureStocksSeeded().catch(console.error);
   app.get('/api/market/pulse', requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       let wl;
+      const session = getOrCreateSession(req.headers['x-session-id'] as string | undefined);
       if (req.token) {
         const { watchlists, activeId } = await supabaseRepo.getWatchlists(req.token);
         const wId = (req.query.watchlistId as string) || activeId;
         wl = watchlists.find((w: any) => w.id === wId) || watchlists[0];
       } else {
-        const watchlistId = (req.query.watchlistId as string) || userSession.activeWatchlistId;
-        wl = userSession.watchlists.find((w) => w.id === watchlistId) || userSession.watchlists[0];
+        const watchlistId = (req.query.watchlistId as string) || session.activeWatchlistId;
+        wl = session.watchlists.find((w) => w.id === watchlistId) || session.watchlists[0];
       }
-      const pulse = await MarketDataProvider.getMarketPulse(wl?.symbols || []);
+      const pulse = await MarketDataProvider.getMarketPulse(session, wl?.symbols || []);
       res.json({ success: true, data: pulse });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -226,15 +233,16 @@ supabaseRepo.ensureStocksSeeded().catch(console.error);
   app.get('/api/market/events', requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       let wl;
+      const session = getOrCreateSession(req.headers['x-session-id'] as string | undefined);
       if (req.token) {
         const { watchlists, activeId } = await supabaseRepo.getWatchlists(req.token);
         const wId = (req.query.watchlistId as string) || activeId;
         wl = watchlists.find((w: any) => w.id === wId) || watchlists[0];
       } else {
-        const watchlistId = (req.query.watchlistId as string) || userSession.activeWatchlistId;
-        wl = userSession.watchlists.find((w) => w.id === watchlistId) || userSession.watchlists[0];
+        const watchlistId = (req.query.watchlistId as string) || session.activeWatchlistId;
+        wl = session.watchlists.find((w) => w.id === watchlistId) || session.watchlists[0];
       }
-      const events = await MarketDataProvider.getEvents(wl?.symbols);
+      const events = await MarketDataProvider.getEvents(session, wl?.symbols);
       res.json({ success: true, data: events });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -243,13 +251,15 @@ supabaseRepo.ensureStocksSeeded().catch(console.error);
 
   app.post('/api/market/events/:id/acknowledge', (req, res) => {
     const { id } = req.params;
-    userSession.acknowledgedEventIds.add(id);
+    const session = getOrCreateSession(req.headers['x-session-id'] as string | undefined);
+    session.acknowledgedEventIds.add(id);
     res.json({ success: true, acknowledged: true, id });
   });
 
   app.post('/api/market/events/:id/dismiss', (req, res) => {
     const { id } = req.params;
-    userSession.dismissedEventIds.add(id);
+    const session = getOrCreateSession(req.headers['x-session-id'] as string | undefined);
+    session.dismissedEventIds.add(id);
     res.json({ success: true, dismissed: true, id });
   });
 
@@ -335,45 +345,48 @@ Response (one sentence only):`;
     else if (preset === '3d') targetSec = 72 * 3600;
     else if (typeof awaySeconds === 'number' && awaySeconds >= 0) targetSec = awaySeconds;
 
-    userSession.simulatedAwaySeconds = targetSec;
-    userSession.lastVisitTimestamp = Date.now() - targetSec * 1000;
+    const session = getOrCreateSession(req.headers['x-session-id'] as string | undefined);
+    session.simulatedAwaySeconds = targetSec;
+    session.lastVisitTimestamp = Date.now() - targetSec * 1000;
 
     // Reset user snapshots to "previous" price (before the demo moves happened)
     const factor = targetSec >= 24 * 3600 ? 0.93 : 0.97;
     BASE_STOCKS.forEach((s) => {
-      userSession.userStockSnapshots[s.symbol] = {
+      session.userStockSnapshots[s.symbol] = {
         price: Number((s.yesterdayClose * (s.symbol === 'HDFCBANK' ? 1.027 : factor)).toFixed(2)),
-        timestamp: userSession.lastVisitTimestamp,
+        timestamp: session.lastVisitTimestamp,
       };
     });
 
     res.json({
       success: true,
       simulatedAwaySeconds: targetSec,
-      lastVisitTimestamp: userSession.lastVisitTimestamp,
+      lastVisitTimestamp: session.lastVisitTimestamp,
       awayFormatted: formatDuration(targetSec),
     });
   });
 
   // ── Session Sync ────────────────────────────────────────────────────────────
-  app.post('/api/session/sync', async (_req, res) => {
-    userSession.lastVisitTimestamp = Date.now();
-    userSession.simulatedAwaySeconds = 0;
-    const stocks = await MarketDataProvider.getStocks();
+  app.post('/api/session/sync', async (req, res) => {
+    const session = getOrCreateSession(req.headers['x-session-id'] as string | undefined);
+    session.lastVisitTimestamp = Date.now();
+    session.simulatedAwaySeconds = 0;
+    const stocks = await MarketDataProvider.getStocks(session);
     stocks.forEach((s) => {
-      userSession.userStockSnapshots[s.symbol] = { price: s.currentPrice, timestamp: Date.now() };
+      session.userStockSnapshots[s.symbol] = { price: s.currentPrice, timestamp: Date.now() };
     });
     res.json({ success: true, timestamp: Date.now() });
   });
 
   // ── Demo Reset ──────────────────────────────────────────────────────────────
   // Restores the canonical "7h 42m away" demo scenario for judges
-  app.post('/api/demo/reset', (_req, res) => {
+  app.post('/api/demo/reset', (req, res) => {
+    const session = getOrCreateSession(req.headers['x-session-id'] as string | undefined);
     const demoAwaySeconds = 7 * 3600 + 42 * 60;
-    userSession.simulatedAwaySeconds = demoAwaySeconds;
-    userSession.lastVisitTimestamp = Date.now() - demoAwaySeconds * 1000;
-    userSession.dismissedEventIds.clear();
-    userSession.acknowledgedEventIds.clear();
+    session.simulatedAwaySeconds = demoAwaySeconds;
+    session.lastVisitTimestamp = Date.now() - demoAwaySeconds * 1000;
+    session.dismissedEventIds.clear();
+    session.acknowledgedEventIds.clear();
 
     // Restore canonical snapshot prices (the "before" state)
     const snapshotPrices: Record<string, number> = {
@@ -391,7 +404,7 @@ Response (one sentence only):`;
       BAJFINANCE: 7015.00,
     };
     Object.entries(snapshotPrices).forEach(([sym, price]) => {
-      userSession.userStockSnapshots[sym] = { price, timestamp: userSession.lastVisitTimestamp };
+      session.userStockSnapshots[sym] = { price, timestamp: session.lastVisitTimestamp };
     });
 
     res.json({

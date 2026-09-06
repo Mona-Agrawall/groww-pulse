@@ -297,62 +297,83 @@ export interface UserSessionState {
 // Initialize default session state: exactly 7 hours 42 minutes ago (27,720 seconds) for the memorable hackathon demo!
 const defaultAwaySeconds = 7 * 3600 + 42 * 60; // 7h 42m
 
-export const userSession: UserSessionState = {
-  userId: 'demo_user_2026',
-  simulatedAwaySeconds: defaultAwaySeconds,
-  lastVisitTimestamp: Date.now() - defaultAwaySeconds * 1000,
-  dismissedEventIds: new Set<string>(),
-  acknowledgedEventIds: new Set<string>(),
-  userStockSnapshots: {
-    RELIANCE: { price: 2341.50, timestamp: Date.now() - defaultAwaySeconds * 1000 },
-    TCS: { price: 4051.00, timestamp: Date.now() - defaultAwaySeconds * 1000 },
-    HDFCBANK: { price: 1687.80, timestamp: Date.now() - defaultAwaySeconds * 1000 },
-    INFY: { price: 1792.00, timestamp: Date.now() - defaultAwaySeconds * 1000 },
-    ICICIBANK: { price: 1238.10, timestamp: Date.now() - defaultAwaySeconds * 1000 },
-    SBIN: { price: 820.00, timestamp: Date.now() - defaultAwaySeconds * 1000 },
-    BHARTIARTL: { price: 1595.00, timestamp: Date.now() - defaultAwaySeconds * 1000 },
-    TATAMOTORS: { price: 960.20, timestamp: Date.now() - defaultAwaySeconds * 1000 },
-    ITC: { price: 470.50, timestamp: Date.now() - defaultAwaySeconds * 1000 },
-    LT: { price: 3515.00, timestamp: Date.now() - defaultAwaySeconds * 1000 },
-    AAPL: { price: 173.50, timestamp: Date.now() - defaultAwaySeconds * 1000 },
-    MSFT: { price: 400.00, timestamp: Date.now() - defaultAwaySeconds * 1000 },
-  },
-  watchlists: [
-    {
-      id: 'wl_default',
-      name: 'Primary Watchlist',
-      symbols: ['RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'ICICIBANK', 'BHARTIARTL', 'TATAMOTORS', 'AAPL', 'MSFT'],
-      isDefault: true,
-      createdAt: Date.now() - 86400000 * 14,
-      updatedAt: Date.now()
+/** Build a fresh canonical demo session (the "7h 42m away" scenario). */
+function createDefaultSession(): UserSessionState {
+  const ts = Date.now() - defaultAwaySeconds * 1000;
+  return {
+    userId: 'demo_user_2026',
+    simulatedAwaySeconds: defaultAwaySeconds,
+    lastVisitTimestamp: ts,
+    dismissedEventIds: new Set<string>(),
+    acknowledgedEventIds: new Set<string>(),
+    userStockSnapshots: {
+      RELIANCE:    { price: 2341.50, timestamp: ts },
+      TCS:         { price: 4051.00, timestamp: ts },
+      HDFCBANK:    { price: 1687.80, timestamp: ts },
+      INFY:        { price: 1792.00, timestamp: ts },
+      ICICIBANK:   { price: 1238.10, timestamp: ts },
+      SBIN:        { price: 820.00,  timestamp: ts },
+      BHARTIARTL:  { price: 1595.00, timestamp: ts },
+      TATAMOTORS:  { price: 960.20,  timestamp: ts },
+      ITC:         { price: 470.50,  timestamp: ts },
+      LT:          { price: 3515.00, timestamp: ts },
+      AAPL:        { price: 173.50,  timestamp: ts },
+      MSFT:        { price: 400.00,  timestamp: ts },
     },
-    {
-      id: 'wl_tech',
-      name: 'Tech & Digital',
-      symbols: ['TCS', 'INFY', 'BHARTIARTL'],
-      isDefault: false,
-      createdAt: Date.now() - 86400000 * 7,
-      updatedAt: Date.now()
-    },
-    {
-      id: 'wl_banks',
-      name: 'Indian Banks',
-      symbols: ['HDFCBANK', 'ICICIBANK', 'SBIN'],
-      isDefault: false,
-      createdAt: Date.now() - 86400000 * 5,
-      updatedAt: Date.now()
-    },
-    {
-      id: 'wl_heavyweights',
-      name: 'Bluechips & Infra',
-      symbols: ['RELIANCE', 'LT', 'ITC', 'TITAN', 'BAJFINANCE'],
-      isDefault: false,
-      createdAt: Date.now() - 86400000 * 3,
-      updatedAt: Date.now()
-    }
-  ],
-  activeWatchlistId: 'wl_default'
-};
+    watchlists: [
+      {
+        id: 'wl_default',
+        name: 'Primary Watchlist',
+        symbols: ['RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'ICICIBANK', 'BHARTIARTL', 'TATAMOTORS', 'AAPL', 'MSFT'],
+        isDefault: true,
+        createdAt: Date.now() - 86400000 * 14,
+        updatedAt: Date.now()
+      },
+      {
+        id: 'wl_tech',
+        name: 'Tech & Digital',
+        symbols: ['TCS', 'INFY', 'BHARTIARTL'],
+        isDefault: false,
+        createdAt: Date.now() - 86400000 * 7,
+        updatedAt: Date.now()
+      },
+      {
+        id: 'wl_banks',
+        name: 'Indian Banks',
+        symbols: ['HDFCBANK', 'ICICIBANK', 'SBIN'],
+        isDefault: false,
+        createdAt: Date.now() - 86400000 * 5,
+        updatedAt: Date.now()
+      },
+      {
+        id: 'wl_heavyweights',
+        name: 'Bluechips & Infra',
+        symbols: ['RELIANCE', 'LT', 'ITC', 'TITAN', 'BAJFINANCE'],
+        isDefault: false,
+        createdAt: Date.now() - 86400000 * 3,
+        updatedAt: Date.now()
+      }
+    ],
+    activeWatchlistId: 'wl_default'
+  };
+}
+
+// ── Per-session store ────────────────────────────────────────────────────────
+// Each browser tab (identified by X-Session-Id) gets its own isolated state.
+// In-memory only — same persistence guarantees as before (resets on cold start).
+const sessions = new Map<string, UserSessionState>();
+
+/**
+ * Returns (or creates) the isolated session state for the given session ID.
+ * Called once per request in server.ts before any MarketDataProvider call.
+ */
+export function getOrCreateSession(sessionId?: string | null): UserSessionState {
+  const key = sessionId?.trim() || 'default';
+  if (!sessions.has(key)) {
+    sessions.set(key, createDefaultSession());
+  }
+  return sessions.get(key)!;
+}
 
 import { GoogleGenAI } from '@google/genai';
 
@@ -372,7 +393,8 @@ export class MeaningfulChangeEngine {
     currentPrice: number,
     volume: number,
     openPrice: number,
-    userPreviousPrice: number
+    userPreviousPrice: number,
+    awayDurationStr: string
   ): { score: number; level: 'high' | 'medium' | 'low'; factors: AttentionFactor[] } {
     const factors: AttentionFactor[] = [];
     let score = 20; // baseline score
@@ -471,7 +493,7 @@ export class MeaningfulChangeEngine {
           label: `${userDeltaPct >= 0 ? '+' : ''}${userDeltaPct.toFixed(1)}% since your last visit`,
           points: 16,
           type: 'price',
-          description: `Price moved ₹${Math.abs(currentPrice - userPreviousPrice).toFixed(1)} since you checked ${formatDuration(userSession.simulatedAwaySeconds)} ago.`
+          description: `Price moved ₹${Math.abs(currentPrice - userPreviousPrice).toFixed(1)} since you checked ${awayDurationStr} ago.`
         });
       }
     }
@@ -738,7 +760,7 @@ export class MarketDataProvider {
   /**
    * Get all stocks enriched with Attention Scores and user deltas
    */
-  static async getStocks(symbols?: string[]): Promise<Stock[]> {
+  static async getStocks(session: UserSessionState, symbols?: string[]): Promise<Stock[]> {
     const list = symbols && symbols.length > 0
       ? BASE_STOCKS.filter(s => symbols.includes(s.symbol))
       : BASE_STOCKS;
@@ -760,18 +782,19 @@ export class MarketDataProvider {
       const dayLow = Math.min(currentPrice, openPrice, yesterdayClose * 0.99);
 
       // User snapshot baseline
-      const snapshot = userSession.userStockSnapshots[s.symbol];
+      const snapshot = session.userStockSnapshots[s.symbol];
       const previousPrice = snapshot ? snapshot.price : yesterdayClose;
       const priceDiff = currentPrice - previousPrice;
       const percentDiff = (priceDiff / previousPrice) * 100;
-      const awayStr = formatDuration(userSession.simulatedAwaySeconds);
+      const awayStr = formatDuration(session.simulatedAwaySeconds);
 
       const attention = MeaningfulChangeEngine.calculateAttention(
         s,
         currentPrice,
         volume,
         openPrice,
-        previousPrice
+        previousPrice,
+        awayStr
       );
 
       const narrative = await MeaningfulChangeEngine.buildStockDeltaNarrative(
@@ -834,8 +857,8 @@ export class MarketDataProvider {
    * Get single stock extended detail
    */
   
-  static async getStockDetail(symbol: string, _timeframe: Timeframe): Promise<StockDetailExtended> {
-    const stocks = await this.getStocks([symbol]);
+  static async getStockDetail(session: UserSessionState, symbol: string, _timeframe: Timeframe): Promise<StockDetailExtended> {
+    const stocks = await this.getStocks(session, [symbol]);
     const stock = stocks[0];
     if (!stock) throw new Error('Stock not found');
 
@@ -884,9 +907,9 @@ export class MarketDataProvider {
   /**
    * Get chronological events stream
    */
-  static getEvents(symbols?: string[]): MarketEvent[] {
+  static getEvents(session: UserSessionState, symbols?: string[]): MarketEvent[] {
     const now = Date.now();
-    const awaySec = userSession.simulatedAwaySeconds;
+    const awaySec = session.simulatedAwaySeconds;
     const startOfAway = now - awaySec * 1000;
 
     const rawEvents: MarketEvent[] = [
@@ -902,8 +925,8 @@ export class MarketDataProvider {
         importance: 'critical',
         explanation: 'RELIANCE surged past ₹2,410 on 2.4× 30-day average volume, driven by retail & petrochemical margin expansion rumors.',
         miniChart: [2342, 2350, 2368, 2390, 2415, 2431],
-        dismissed: userSession.dismissedEventIds.has('evt_rel_1'),
-        acknowledged: userSession.acknowledgedEventIds.has('evt_rel_1')
+        dismissed: session.dismissedEventIds.has('evt_rel_1'),
+        acknowledged: session.acknowledgedEventIds.has('evt_rel_1')
       },
       {
         id: 'evt_tcs_1',
@@ -917,8 +940,8 @@ export class MarketDataProvider {
         importance: 'high',
         explanation: 'Broke clean through ₹4,110 multi-week ceiling with strong European market open buy orders and zero intraday pullback.',
         miniChart: [4050, 4065, 4080, 4105, 4118, 4128],
-        dismissed: userSession.dismissedEventIds.has('evt_tcs_1'),
-        acknowledged: userSession.acknowledgedEventIds.has('evt_tcs_1')
+        dismissed: session.dismissedEventIds.has('evt_tcs_1'),
+        acknowledged: session.acknowledgedEventIds.has('evt_tcs_1')
       },
       {
         id: 'evt_hdfc_1',
@@ -932,8 +955,8 @@ export class MarketDataProvider {
         importance: 'critical',
         explanation: 'Gap-up to ₹1,695 was forcefully rejected; aggressive institutional selling dumped 14.5M shares down to ₹1,642 support.',
         miniChart: [1695, 1682, 1668, 1655, 1640, 1642],
-        dismissed: userSession.dismissedEventIds.has('evt_hdfc_1'),
-        acknowledged: userSession.acknowledgedEventIds.has('evt_hdfc_1')
+        dismissed: session.dismissedEventIds.has('evt_hdfc_1'),
+        acknowledged: session.acknowledgedEventIds.has('evt_hdfc_1')
       },
       {
         id: 'evt_infy_1',
@@ -947,8 +970,8 @@ export class MarketDataProvider {
         importance: 'medium',
         explanation: 'Morning spread tightened from 1.8% to 0.4%; options implied volatility cooled down back into normal 30-day band.',
         miniChart: [1792, 1788, 1782, 1784, 1786, 1785],
-        dismissed: userSession.dismissedEventIds.has('evt_infy_1'),
-        acknowledged: userSession.acknowledgedEventIds.has('evt_infy_1')
+        dismissed: session.dismissedEventIds.has('evt_infy_1'),
+        acknowledged: session.acknowledgedEventIds.has('evt_infy_1')
       },
       {
         id: 'evt_tata_1',
@@ -962,8 +985,8 @@ export class MarketDataProvider {
         importance: 'high',
         explanation: 'Monthly electric vehicle delivery numbers beat consensus by 14%; share price pushed through ₹980 psychological barrier.',
         miniChart: [960, 965, 972, 976, 982, 985],
-        dismissed: userSession.dismissedEventIds.has('evt_tata_1'),
-        acknowledged: userSession.acknowledgedEventIds.has('evt_tata_1')
+        dismissed: session.dismissedEventIds.has('evt_tata_1'),
+        acknowledged: session.acknowledgedEventIds.has('evt_tata_1')
       },
       {
         id: 'evt_bharti_1',
@@ -977,8 +1000,8 @@ export class MarketDataProvider {
         importance: 'medium',
         explanation: 'Brokerage note lifted average revenue per user target to ₹230, lifting telecommunications sector sentiment.',
         miniChart: [1595, 1602, 1610, 1618, 1622, 1623],
-        dismissed: userSession.dismissedEventIds.has('evt_bharti_1'),
-        acknowledged: userSession.acknowledgedEventIds.has('evt_bharti_1')
+        dismissed: session.dismissedEventIds.has('evt_bharti_1'),
+        acknowledged: session.acknowledgedEventIds.has('evt_bharti_1')
       }
     ];
 
@@ -994,11 +1017,11 @@ export class MarketDataProvider {
    * "You were away for 7h 42m. 3 things changed meaningfully..."
    */
   
-  static async getMarketPulse(watchlistSymbols: string[]): Promise<MarketPulse> {
-    const activeStocks = await this.getStocks(watchlistSymbols);
-    const events = this.getEvents(watchlistSymbols).filter(e => !e.dismissed);
+  static async getMarketPulse(session: UserSessionState, watchlistSymbols: string[]): Promise<MarketPulse> {
+    const activeStocks = await this.getStocks(session, watchlistSymbols);
+    const events = this.getEvents(session, watchlistSymbols).filter(e => !e.dismissed);
 
-    const awaySec = userSession.simulatedAwaySeconds;
+    const awaySec = session.simulatedAwaySeconds;
     const awayFormatted = formatDuration(awaySec);
 
     const highAttentionStocks = activeStocks.filter(s => s.attentionScore >= 65);
@@ -1013,7 +1036,7 @@ export class MarketDataProvider {
     return {
       awayDurationFormatted: awayFormatted,
       awayDurationSeconds: awaySec,
-      lastVisitTimestamp: userSession.lastVisitTimestamp,
+      lastVisitTimestamp: session.lastVisitTimestamp,
       currentTimestamp: Date.now(),
       totalChangesCount: activeStocks.length,
       meaningfulChangesCount: meaningfulCount,
@@ -1031,11 +1054,14 @@ export class MarketDataProvider {
    */
   
   static async search(query: string): Promise<Stock[]> {
-    if (!query || query.trim() === '') return this.getStocks(BASE_STOCKS.slice(0, 6).map(s => s.symbol));
+    // search() is session-agnostic: uses a fresh default session so results
+    // are not personalised to any specific tab's time-travel state.
+    const searchSession = getOrCreateSession('__search__');
+    if (!query || query.trim() === '') return this.getStocks(searchSession, BASE_STOCKS.slice(0, 6).map(s => s.symbol));
     const searchResults = await activeProvider.searchSymbols(query);
     const symbols = searchResults.map(s => s.symbol).slice(0, 10);
     if (symbols.length === 0) return [];
-    return this.getStocks(symbols);
+    return this.getStocks(searchSession, symbols);
   }
 
   /**
