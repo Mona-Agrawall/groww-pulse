@@ -9,7 +9,8 @@ A conventional watchlist answers *"what is the current price?"*. Nazar answers *
 
 ## LIVE DEPLOYED LINK - https://groww-pulse-iota.vercel.app/
 
-<img width="1919" height="1199" alt="image" src="https://github.com/user-attachments/assets/cb046d00-6c55-4624-b650-3ee99529e9a2" />
+<img width="1919" height="1198" alt="image" src="https://github.com/user-attachments/assets/139acb6d-ff7f-46b1-b5b9-d4f57246420a" />
+
 
 ---
 
