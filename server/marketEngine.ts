@@ -307,18 +307,18 @@ function createDefaultSession(): UserSessionState {
     dismissedEventIds: new Set<string>(),
     acknowledgedEventIds: new Set<string>(),
     userStockSnapshots: {
-      RELIANCE:    { price: 2341.50, timestamp: ts },
-      TCS:         { price: 4051.00, timestamp: ts },
-      HDFCBANK:    { price: 1687.80, timestamp: ts },
-      INFY:        { price: 1792.00, timestamp: ts },
-      ICICIBANK:   { price: 1238.10, timestamp: ts },
-      SBIN:        { price: 820.00,  timestamp: ts },
-      BHARTIARTL:  { price: 1595.00, timestamp: ts },
-      TATAMOTORS:  { price: 960.20,  timestamp: ts },
-      ITC:         { price: 470.50,  timestamp: ts },
-      LT:          { price: 3515.00, timestamp: ts },
-      AAPL:        { price: 173.50,  timestamp: ts },
-      MSFT:        { price: 400.00,  timestamp: ts },
+      RELIANCE: { price: 2341.50, timestamp: ts },
+      TCS: { price: 4051.00, timestamp: ts },
+      HDFCBANK: { price: 1687.80, timestamp: ts },
+      INFY: { price: 1792.00, timestamp: ts },
+      ICICIBANK: { price: 1238.10, timestamp: ts },
+      SBIN: { price: 820.00, timestamp: ts },
+      BHARTIARTL: { price: 1595.00, timestamp: ts },
+      TATAMOTORS: { price: 960.20, timestamp: ts },
+      ITC: { price: 470.50, timestamp: ts },
+      LT: { price: 3515.00, timestamp: ts },
+      AAPL: { price: 173.50, timestamp: ts },
+      MSFT: { price: 400.00, timestamp: ts },
     },
     watchlists: [
       {
@@ -590,7 +590,7 @@ export class MeaningfulChangeEngine {
     } else {
       fallbackText = `${symbol} held steady at ₹${currentPrice.toLocaleString('en-IN')} (${sign}${pct.toFixed(2)}%), experiencing orderly trading within historical range.`;
     }
-    
+
     // Only cache fallbacks shortly (30s) so if API recovers, it switches over
     narrativeCache.set(symbol, { text: fallbackText, expiresAt: now + 30 * 1000 });
     return fallbackText;
@@ -856,7 +856,7 @@ export class MarketDataProvider {
   /**
    * Get single stock extended detail
    */
-  
+
   static async getStockDetail(session: UserSessionState, symbol: string, _timeframe: Timeframe): Promise<StockDetailExtended> {
     const stocks = await this.getStocks(session, [symbol]);
     const stock = stocks[0];
@@ -884,7 +884,7 @@ export class MarketDataProvider {
 
     const base = BASE_STOCKS.find(s => s.symbol === symbol);
     const resistanceLevel = Number((stock.high52w * 0.995).toFixed(2));
-    const supportLevel    = Number((stock.low52w  * 1.005).toFixed(2));
+    const supportLevel = Number((stock.low52w * 1.005).toFixed(2));
     const analystConsensus = stock.attentionScore >= 65 ? 'Buy' : stock.attentionScore >= 40 ? 'Hold' : 'Sell';
 
     return {
@@ -900,7 +900,7 @@ export class MarketDataProvider {
       supportLevel,
       analystConsensus,
       peRatio: base?.peRatio ?? 25,
-      events: this.getEvents([symbol])
+      events: this.getEvents(session, [symbol])
     };
   }
 
@@ -1016,7 +1016,7 @@ export class MarketDataProvider {
    * Produce the central "Market Pulse" summary
    * "You were away for 7h 42m. 3 things changed meaningfully..."
    */
-  
+
   static async getMarketPulse(session: UserSessionState, watchlistSymbols: string[]): Promise<MarketPulse> {
     const activeStocks = await this.getStocks(session, watchlistSymbols);
     const events = this.getEvents(session, watchlistSymbols).filter(e => !e.dismissed);
@@ -1052,7 +1052,7 @@ export class MarketDataProvider {
   /**
    * Search across all stocks
    */
-  
+
   static async search(query: string): Promise<Stock[]> {
     // search() is session-agnostic: uses a fresh default session so results
     // are not personalised to any specific tab's time-travel state.
@@ -1067,7 +1067,7 @@ export class MarketDataProvider {
   /**
    * Feed data status indicator
    */
-  
+
   static async getFeedStatus(): Promise<FeedStatus> {
     const isLive = process.env.MARKET_DATA_PROVIDER === 'twelve_data';
     return {
