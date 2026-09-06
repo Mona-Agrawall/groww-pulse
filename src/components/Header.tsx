@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
  };
 
  const tabs: { id: 'pulse' | 'watchlist' | 'timeline' | 'indices'; label: string; badge?: string }[] = [
- { id: 'pulse', label: 'Market Pulse' },
+ { id: 'pulse', label: 'Nazar' },
  { id: 'watchlist', label: 'Watchlist' },
  { id: 'timeline', label: 'Timeline' },
  { id: 'indices', label: 'Indices' }
@@ -66,22 +66,22 @@ export const Header: React.FC<HeaderProps> = ({
  onClick={() => onTabChange('pulse')}
  className="flex items-center gap-3 cursor-pointer group"
  >
- <div className="relative flex items-center justify-center w-7 h-7 rounded bg-[var(--color-panel)] border border-[var(--color-border)] group-hover:border-[var(--color-muted)] transition-colors">
- <Activity className="w-3.5 h-3.5 text-[var(--color-ink)]" />
- <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
- <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-green)] opacity-75"></span>
- <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-green)]"></span>
- </span>
- </div>
+  <div className="relative flex items-center justify-center transition-colors">
+  <img src="/nazar-favicon.png" alt="Nazar Icon" className="w-8 h-8 object-contain" />
+  <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-green)] opacity-75"></span>
+  <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-green)]"></span>
+  </span>
+  </div>
  <div>
  <span className="text-lg sm:text-xl font-medium text-[var(--color-ink)] block">
- MARKET PULSE
+ NAZAR
  </span>
  </div>
  </div>
 
  {/* Editorial Navigation tabs */}
- <nav className="hidden md:flex items-center gap-6 text-[11px] uppercase tracking-[0.2em] font-medium text-[var(--color-muted)]">
+ <nav className="hidden md:flex items-center gap-6 text-sm uppercase tracking-normal font-semibold text-[var(--color-ink-soft)]">
  {tabs.map(tab => {
  const active = activeTab === tab.id;
  return (
@@ -112,25 +112,22 @@ export const Header: React.FC<HeaderProps> = ({
  {/* Quick Command search trigger */}
  <button
  onClick={onOpenSearch}
- className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-background)] hover:bg-[var(--color-panel)] border border-[var(--color-border)] shadow-sm hover:shadow-md inner-highlight hover:-translate-y-[0.5px] text-xs text-[var(--color-muted)] hover:text-[var(--color-ink)] transition-all group shrink-0"
+ title="Search (⌘K)"
+ className="p-2 rounded-full bg-[var(--color-background)] hover:bg-[var(--color-panel)] border border-[var(--color-border)] shadow-sm hover:shadow-md inner-highlight hover:-translate-y-[0.5px] transition-all group shrink-0"
  >
- <Search className="w-3.5 h-3.5 text-[var(--color-faint)] group-hover:text-[var(--color-ink)]" />
- <span className="hidden lg:inline text-[11px] tracking-wide whitespace-nowrap">Search</span>
- <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.2 text-[9px] font-mono text-[var(--color-faint)] bg-[var(--color-background)] rounded border border-[var(--color-border)]">
- ⌘K
- </kbd>
+ <Search className="w-4 h-4 text-[var(--color-ink-soft)] group-hover:text-[var(--color-ink)]" />
  </button>
 
  {/* Editorial Session Time Display & Simulator Trigger */}
  <div
  onClick={onOpenTimeTravel}
- title="Simulate time away to test Market Pulse calculation"
+ title="Simulate time away to test Nazar calculation"
  className="cursor-pointer group text-right hidden lg:block shrink-0"
  >
- <div className="text-[10px] uppercase text-[var(--color-faint)] group-hover:text-[var(--color-muted)] transition-colors whitespace-nowrap">
+ <div className="text-[10px] uppercase font-medium text-[var(--color-faint)] group-hover:text-[var(--color-muted)] transition-colors whitespace-nowrap">
  Session Time
  </div>
- <div className="text-xs font-mono font-medium text-[var(--color-ink)] flex items-center justify-end gap-1 whitespace-nowrap">
+ <div className="text-xs font-mono font-semibold text-[var(--color-ink)] flex items-center justify-end gap-1 whitespace-nowrap">
  <span>{awayFormatted} away</span>
  <span className="text-[9px] text-[var(--color-green)] underline underline-offset-2 decoration-[var(--color-border)] group-hover:decoration-[var(--color-green)]">Simulate</span>
  </div>
@@ -191,12 +188,9 @@ export const Header: React.FC<HeaderProps> = ({
  </button>
 
  {/* User Profile / Auth Actions */}
- <div className="flex items-center gap-2 pl-4 ml-2 border-l border-[var(--color-border-soft)]">
- <div className="flex items-center justify-center w-7 h-7 rounded-full bg-[var(--color-panel)] border border-[var(--color-border-soft)]">
- <UserIcon className="w-3.5 h-3.5 text-[var(--color-ink-soft)]" />
- </div>
- <div className="hidden lg:block text-[11px] font-medium text-[var(--color-ink-soft)] mr-2">
- {user?.email ? user.email.split('@')[0] : 'Guest'}
+ <div className="flex items-center gap-3 pl-4 ml-2 border-l border-[var(--color-border-soft)]">
+ <div className="flex items-center justify-center w-9 h-9 rounded-full bg-[var(--color-panel)] border border-[var(--color-border-soft)] shadow-sm">
+ <UserIcon className="w-4 h-4 text-[var(--color-ink-soft)]" />
  </div>
  <button
  onClick={handleSignOut}

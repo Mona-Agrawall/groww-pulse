@@ -218,7 +218,7 @@ export const IntelligentWatchlist: React.FC<IntelligentWatchlistProps> = ({
  <div className="col-span-5" role="columnheader">Asset &amp; Meaningful Narrative</div>
  <div className="col-span-3" role="columnheader">Since Last Checked</div>
  <div className="col-span-2 text-right" role="columnheader">Price / Trend</div>
- <div className="col-span-2 text-right" role="columnheader">Pulse Score</div>
+ <div className="col-span-2 text-right" role="columnheader">Nazar Score</div>
  </div>
 
  <div className="divide-y divide-[var(--color-border-soft)]" role="list">
@@ -328,7 +328,7 @@ export const IntelligentWatchlist: React.FC<IntelligentWatchlistProps> = ({
  {stock.attentionScore}
  </span>
  <span className="text-[9px] uppercase text-[var(--color-faint)]">
- Pulse
+ Nazar
  </span>
  </button>
 

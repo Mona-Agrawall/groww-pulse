@@ -58,7 +58,7 @@ export const FirstOpenExperience: React.FC<FirstOpenExperienceProps> = ({ onComp
  const t2 = setTimeout(() => setStageText('Calculating Meaningful Attention Shifts...'), 1100);
  const t3 = setTimeout(() => {
  setPhase('morphing');
- setStageText('Welcome to Pulse.');
+ setStageText('Welcome to Nazar.');
  }, 1500);
  const t4 = setTimeout(() => {
  onComplete();

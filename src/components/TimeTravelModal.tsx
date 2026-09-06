@@ -120,7 +120,7 @@ export const TimeTravelModal: React.FC<TimeTravelModalProps> = ({
  </div>
 
  <p className="text-xs text-[var(--color-muted)] my-4 leading-relaxed font-normal">
- Select an absence duration to simulate returning after being away. The engine will instantly recalculate personalized price deltas, Market Pulse narrative, and attention scores.
+ Select an absence duration to simulate returning after being away. The engine will instantly recalculate personalized price deltas, Nazar narrative, and attention scores.
  </p>
 
  {/* Presets List */}
@@ -161,7 +161,7 @@ export const TimeTravelModal: React.FC<TimeTravelModalProps> = ({
  {/* Footer Guide */}
  <div className="mt-5 pt-4 border-t border-[var(--color-border-soft)] flex items-center justify-between text-[11px] text-[var(--color-faint)] font-mono">
  <span>Deterministic state machine · No random data</span>
- <span>Pulse 2026 Engine</span>
+ <span>Nazar 2026 Engine</span>
  </div>
  </motion.div>
  </div>

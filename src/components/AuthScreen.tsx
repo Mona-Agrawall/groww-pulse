@@ -58,10 +58,10 @@ export const AuthScreen: React.FC = () => {
  >
  <div className="text-center mb-10">
  <div className="inline-flex items-center justify-center mb-6">
- <span className="font-mono text-xl font-medium text-[var(--color-ink)]">PULSE</span>
+ <span className="font-mono text-xl font-medium text-[var(--color-ink)]">NAZAR</span>
  </div>
  <h1 className="text-3xl font-normal text-[var(--color-ink)] mb-2">
- {isLogin ? 'Welcome back.' : 'Join Pulse.'}
+ {isLogin ? 'Welcome back.' : 'Join Nazar.'}
  </h1>
  <p className="text-[var(--color-muted)] text-sm">
  {isLogin 
